@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'widget/dayNumSelector.dart';
+import 'widget/nodeDetail.dart';
 
 void main() => runApp(MyApp());
 
@@ -15,6 +17,7 @@ class MyApp extends StatelessWidget {
         primaryColor: Colors.white,
       ),
       home: Scaffold(
+        resizeToAvoidBottomPadding: false,
         appBar: AppBar(
           title: Text('提醒事项'),
         ),
@@ -36,16 +39,22 @@ class _RandomWorldsState extends State<RandomWorlds> {
   var _focusNode = new FocusNode();
   var dayNumCon = new TextEditingController();
   var dayNumFocus = new FocusNode();
+  var nodeDetailContrl = new TextEditingController();
+  var nodeDetailFocus = new FocusNode();
   int hintT = 1;
   var _storageString = '';
   var noteData = {};
 
   //存储所有的提醒事项的数组
   var noteList = List();
+  var time = '';
+  var date = '';
   bool selected = true;
+  bool noNodes = true; //有没有已经存储的提醒
 
   @override
   Widget build(BuildContext context) {
+    // noteList.clear();
     return buildContainer();
   }
 
@@ -136,6 +145,8 @@ class _RandomWorldsState extends State<RandomWorlds> {
                                         style: TextStyle(
                                           fontSize: 20,
                                         ),
+
+
                                       ),
                                     )
                                   ],
@@ -156,7 +167,9 @@ class _RandomWorldsState extends State<RandomWorlds> {
                                           icon: new Icon(Icons.today_outlined),
                                           onPressed: () => _showDataPicker()),
                                       //日期
-                                      dayNumSelector(dayNumCon: dayNumCon, dayNumFocus: dayNumFocus), //天数
+                                      dayNumSelector(
+                                          dayNumCon: dayNumCon,
+                                          dayNumFocus: dayNumFocus), //天数
                                     ],
                                   ),
                                 ),
@@ -182,8 +195,32 @@ class _RandomWorldsState extends State<RandomWorlds> {
                                               child: MaterialButton(
                                                   onPressed: () {
                                                     setState(() {
+                                                      var _tempMessage =
+                                                          nodeController.text
+                                                              .trim();
+                                                      print(_tempMessage);
+                                                      if (_tempMessage !=
+                                                              null &&
+                                                          _tempMessage != '') {
+                                                        noteList.add({
+                                                          'message': nodeController.text,
+                                                          'time': time,
+                                                          'date': date,
+                                                          'dayNum': dayNumCon.text
+                                                        });
+                                                      } else {
+                                                        Scaffold.of(context)
+                                                            .showSnackBar(SnackBar(
+                                                                content: Text(
+                                                                    '您并没有保存任何信息')));
+                                                      }
                                                       selected = true;
                                                       _focusNode.unfocus();
+                                                      dayNumFocus.unfocus();
+                                                      nodeController.clear();
+                                                      dayNumCon.clear();
+                                                      time='';
+                                                      date='';
                                                     });
                                                   },
                                                   child: Text(
@@ -211,6 +248,8 @@ class _RandomWorldsState extends State<RandomWorlds> {
                                                     FocusScope.of(context)
                                                         .requestFocus(
                                                             _focusNode);
+                                                    time='';
+                                                    date='';
                                                   },
                                                   child: Text(
                                                     "重置",
@@ -256,23 +295,55 @@ class _RandomWorldsState extends State<RandomWorlds> {
           ),
 
           /*提醒列表显示*/
-          new Container(
-            //显示已经添加的提醒事项列表
-            child: ListView.builder(
-                itemCount: noteList.length,
-                shrinkWrap: true,
-                itemBuilder: (context, index) {
-                  return Card(
-                    child: new Column(
-                      children: [
-                        ListTile(
-                          title: Text('${noteList[index]}'),
-                        )
-                      ],
-                    ),
-                  );
-                }),
-          )
+
+          //显示已经添加的提醒事项列表
+          noteList.length == 0
+              ? new Card(
+                  margin: EdgeInsets.fromLTRB(25, 0, 25, 10),
+                  child: Container(
+                    constraints: BoxConstraints(minHeight: 130),
+                    child: Center(
+                        child: Text(
+                      "暂无内容",
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    )),
+                  ))
+              : new Expanded(
+                  child: Card(
+                    elevation:selected? 15.0 : 2.0,
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16.0))),
+                  margin: EdgeInsets.fromLTRB(20, 0, 20, 10),
+                  color: Color(0xffF5F5F5),
+                  child: Container(
+                    padding: EdgeInsets.fromLTRB(0, 15, 0, 5),
+                    child: ListView.builder(
+                        itemCount: noteList.length,
+                        shrinkWrap: true,
+                        itemBuilder: (context, index) {
+                          // print(noteList);
+                          return GestureDetector(
+                            onTap: (){
+                              _navigateToMessageDetail(context,noteList[index]);
+                            },
+                            child: Card(
+                              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20.0))),
+                              color: Color(0xffFFFAF0),
+                              margin: EdgeInsets.all(7),
+                              child: new Container(
+                                  padding: EdgeInsets.all(5),
+                                  child: Column(children: [
+                                    new ListTile(
+                                      title: Text('${noteList[index]['message']}'),
+                                    ),
+                                  ],
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                  )
+                              ),
+                            ),
+                          );
+                        }),
+                  ),
+                )),
         ],
       ),
     );
@@ -290,16 +361,17 @@ class _RandomWorldsState extends State<RandomWorlds> {
   }
 
   //时间选择器和日期选择器
-  var _time;
-  var _date;
+  var _tempTime;
+  var _tempDate;
 
   _showTimePicker() async {
     var picker =
         await showTimePicker(context: context, initialTime: TimeOfDay.now());
     setState(() {
-      _time = picker.toString();
+      _tempTime = picker.toString().substring(10,15);
+      time = _tempTime;
     });
-    print(_time);
+    print(time);
   }
 
   _showDataPicker() async {
@@ -311,10 +383,17 @@ class _RandomWorldsState extends State<RandomWorlds> {
         lastDate: DateTime(2040),
         locale: myLocale);
     setState(() {
-      _date = picker.toString().substring(0, 9);
+      _tempDate = picker.toString().substring(0, 9);
+      date = _tempDate;
     });
-    print(_date);
+    print(date);
   }
+
+  //跳转页面
+  _navigateToMessageDetail(BuildContext context,message) async{
+    final result = await Navigator.push(context, MaterialPageRoute(builder: (context)=> nodeDetail(message:message,nodeDetailContrl:nodeDetailContrl,nodeDetailFocus:nodeDetailFocus)));
+  }
+
 
 
   //利用SharedPreferences存储数据
@@ -360,5 +439,3 @@ class _RandomWorldsState extends State<RandomWorlds> {
         nodeController.value.text.toString());
   }
 }
-
-
