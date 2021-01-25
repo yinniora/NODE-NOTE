@@ -10,12 +10,13 @@ class nodeDetail extends StatefulWidget {
 }
 
 class _nodeDetailState extends State<nodeDetail> {
-  _nodeDetailState({ this.message,this.nodeDetailContrl, this.nodeDetailFocus});
+  _nodeDetailState({this.message,this.nodeDetailContrl,this.nodeDetailFocus});
+  final Map message;
+  final TextEditingController nodeDetailContrl ;
+  final FocusNode nodeDetailFocus;
   @override
   Widget build(BuildContext context) {
-    final Map message = this.message;
-    final TextEditingController nodeDetailContrl = nodeDetailContrl;
-    final FocusNode nodeDetailFocus = nodeDetailFocus;
+
     //是否被编辑
     bool noChange = true;
     bool noTime = false; //是否设置了时间
@@ -95,19 +96,4 @@ class _nodeDetailState extends State<nodeDetail> {
 }
 
 
-class nodeDetail1 extends StatelessWidget {
-
-
-  @override
-
-  _showTimePicker() async {
-    var picker =
-    await showTimePicker(context: context, initialTime: TimeOfDay.now());
-    setState(() {
-      _tempTime = picker.toString().substring(10,15);
-      time = _tempTime;
-    });
-    print(time);
-  }
-}
 

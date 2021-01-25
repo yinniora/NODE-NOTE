@@ -43,10 +43,10 @@ class _RandomWorldsState extends State<RandomWorlds> {
   var nodeDetailFocus = new FocusNode();
   int hintT = 1;
   var _storageString = '';
-  var noteData = {};
 
   //存储所有的提醒事项的数组
   var noteList = List();
+
   var time = '';
   var date = '';
   bool selected = true;
@@ -158,14 +158,20 @@ class _RandomWorldsState extends State<RandomWorlds> {
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceEvenly,
                                     children: [
-                                      new IconButton(
-                                        icon: new Icon(Icons.schedule),
-                                        onPressed: () => _showTimePicker(),
-                                      ),
+                                      new Row(children: [
+                                        new IconButton(
+                                          icon: new Icon(Icons.schedule),
+                                          onPressed: () => _showTimePicker(),
+                                        ),
+                                        new Text(time!=null&&time!=''?'${time}':''),
+                                      ],),
                                       //设置时间
-                                      new IconButton(
-                                          icon: new Icon(Icons.today_outlined),
-                                          onPressed: () => _showDataPicker()),
+                                      new Row(children: [
+                                        new IconButton(
+                                            icon: new Icon(Icons.today_outlined),
+                                            onPressed: () => _showDataPicker()),
+                                        new Text(date!=null&&date!=''?'${date}':''),
+                                      ],),
                                       //日期
                                       dayNumSelector(
                                           dayNumCon: dayNumCon,
@@ -194,25 +200,20 @@ class _RandomWorldsState extends State<RandomWorlds> {
                                                               10.0))),
                                               child: MaterialButton(
                                                   onPressed: () {
+                                                    var _tempMessage =
+                                                    nodeController.text
+                                                        .trim();
                                                     setState(() {
-                                                      var _tempMessage =
-                                                          nodeController.text
-                                                              .trim();
                                                       print(_tempMessage);
                                                       if (_tempMessage !=
                                                               null &&
                                                           _tempMessage != '') {
-                                                        noteList.add({
-                                                          'message': nodeController.text,
-                                                          'time': time,
-                                                          'date': date,
-                                                          'dayNum': dayNumCon.text
-                                                        });
+                                                        saveAction(nodeController.text,time,date,dayNumCon.text);
                                                       } else {
                                                         Scaffold.of(context)
                                                             .showSnackBar(SnackBar(
                                                                 content: Text(
-                                                                    '您并没有保存任何信息')));
+                                                                    '您并没有填写任何提醒')));
                                                       }
                                                       selected = true;
                                                       _focusNode.unfocus();
@@ -243,13 +244,15 @@ class _RandomWorldsState extends State<RandomWorlds> {
                                                               10.0))),
                                               child: MaterialButton(
                                                   onPressed: () {
-                                                    nodeController.clear();
-                                                    dayNumCon.clear();
-                                                    FocusScope.of(context)
-                                                        .requestFocus(
-                                                            _focusNode);
-                                                    time='';
-                                                    date='';
+                                                    setState(() {
+                                                      nodeController.clear();
+                                                      dayNumCon.clear();
+                                                      FocusScope.of(context)
+                                                          .requestFocus(
+                                                          _focusNode);
+                                                      time='';
+                                                      date='';
+                                                    });
                                                   },
                                                   child: Text(
                                                     "重置",
@@ -350,14 +353,15 @@ class _RandomWorldsState extends State<RandomWorlds> {
   }
 
   //保存信息到集合
-  subAction() {
-    print(nodeController.value.text);
-    if (nodeController.value.text.toString() != null &&
-        nodeController.value.text.toString() != '') {
-      print(nodeController.value.text);
-      noteData["note"] = nodeController.value.text.toString();
-      noteList.add(noteData);
-    }
+  saveAction(nodeMsg,time,date,dayNum) {
+      var msg = {
+        'message': nodeMsg,
+        'time': time,
+        'date': date,
+        'dayNum': dayNum
+      };
+      saveString(nodeMsg,msg);
+    print(nodeMsg+'保存了');
   }
 
   //时间选择器和日期选择器
@@ -397,18 +401,18 @@ class _RandomWorldsState extends State<RandomWorlds> {
 
 
   //利用SharedPreferences存储数据
-  Future saveString() async {
+  Future saveString(key,msg) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    sharedPreferences.setString(nodeController.value.text.toString(),
-        nodeController.value.text.toString());
+    sharedPreferences.setString(key,
+        msg);
   }
 
-//获取存在SharedPreferences中的数据
-  Future getString() async {
+//获取存在SharedPreferences中的某一项数据
+  Future getString(key) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     setState(() {
       _storageString =
-          sharedPreferences.get(nodeController.value.text.toString());
+          sharedPreferences.get(key);
     });
   }
 
@@ -424,18 +428,18 @@ class _RandomWorldsState extends State<RandomWorlds> {
   }
 
   //删除操作
-  Future deleteString() async {
+  Future deleteString(key) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     //  key
-    sharedPreferences.remove(nodeController.value.text.toString());
+    sharedPreferences.remove(key);
     //清空所有
     // sharedPreferences.clear();
   }
 
   //改操作
-  Future updateString() async {
+  Future updateString(key,msg) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    sharedPreferences.setString(nodeController.value.text.toString(),
-        nodeController.value.text.toString());
+    sharedPreferences.setString(key,
+        msg);
   }
 }
