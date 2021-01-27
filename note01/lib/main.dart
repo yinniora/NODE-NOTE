@@ -5,6 +5,7 @@ import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'widget/dayNumSelector.dart';
 import 'widget/nodeDetail.dart';
+import 'dart:convert' as JSON;
 
 void main() => runApp(MyApp());
 
@@ -20,6 +21,9 @@ class MyApp extends StatelessWidget {
         resizeToAvoidBottomPadding: false,
         appBar: AppBar(
           title: Text('提醒事项'),
+          actions: [
+            TextButton.icon(onPressed: null, icon: Icon(Icons.restore_from_trash_rounded), label: Text(''))
+          ],
         ),
         body: Center(
           child: RandomWorlds(),
@@ -39,8 +43,6 @@ class _RandomWorldsState extends State<RandomWorlds> {
   var _focusNode = new FocusNode();
   var dayNumCon = new TextEditingController();
   var dayNumFocus = new FocusNode();
-  var nodeDetailContrl = new TextEditingController();
-  var nodeDetailFocus = new FocusNode();
   int hintT = 1;
   var _storageString = '';
 
@@ -53,8 +55,17 @@ class _RandomWorldsState extends State<RandomWorlds> {
   bool noNodes = true; //有没有已经存储的提醒
 
   @override
+  void initState() {
+    //开启软件时初始化数组元素
+    getAllData();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // deleteAll();
     // noteList.clear();
+    print(noteList);
     return buildContainer();
   }
 
@@ -204,7 +215,7 @@ class _RandomWorldsState extends State<RandomWorlds> {
                                                     nodeController.text
                                                         .trim();
                                                     setState(() {
-                                                      print(_tempMessage);
+                                                      // print(_tempMessage);
                                                       if (_tempMessage !=
                                                               null &&
                                                           _tempMessage != '') {
@@ -298,7 +309,7 @@ class _RandomWorldsState extends State<RandomWorlds> {
           ),
 
           /*提醒列表显示*/
-
+          
           //显示已经添加的提醒事项列表
           noteList.length == 0
               ? new Card(
@@ -323,26 +334,52 @@ class _RandomWorldsState extends State<RandomWorlds> {
                         itemCount: noteList.length,
                         shrinkWrap: true,
                         itemBuilder: (context, index) {
+                          var item = noteList[index].toString();
                           // print(noteList);
                           return GestureDetector(
                             onTap: (){
                               _navigateToMessageDetail(context,noteList[index]);
                             },
-                            child: Card(
-                              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20.0))),
-                              color: Color(0xffFFFAF0),
-                              margin: EdgeInsets.all(7),
-                              child: new Container(
-                                  padding: EdgeInsets.all(5),
-                                  child: Column(children: [
-                                    new ListTile(
-                                      title: Text('${noteList[index]['message']}'),
-                                    ),
-                                  ],
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                  )
-                              ),
-                            ),
+                            child: Dismissible(
+                                key: Key(UniqueKey().toString()),
+                                direction: DismissDirection.endToStart,
+                                onDismissed: (direction){
+                                    setState(() {
+                                      deleteString(noteList[index]['message']);
+                                      noteList.removeAt(index);
+                                    });
+                                },
+                                dismissThresholds: {DismissDirection.endToStart:0.6},
+                                background: Card(
+                                  margin: EdgeInsets.all(10),
+                                    color: Colors.redAccent,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
+                                    child: Container(
+                                      alignment: Alignment.centerRight,
+                                      padding: EdgeInsets.only(right: 10),
+                                      child: Icon(
+                                        Icons.restore_from_trash,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  ),
+
+                                child: Card(
+                                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20.0))),
+                                  color: Color(0xffFFFAF0),
+                                  margin: EdgeInsets.all(7),
+                                  child: new Container(
+                                      padding: EdgeInsets.all(5),
+                                      child: Column(children: [
+                                        new ListTile(
+                                          title: Text('${noteList[index]['message']}'),
+                                        ),
+                                      ],
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                      )
+                                  ),
+                                ),
+                              )
                           );
                         }),
                   ),
@@ -352,6 +389,7 @@ class _RandomWorldsState extends State<RandomWorlds> {
     );
   }
 
+
   //保存信息到集合
   saveAction(nodeMsg,time,date,dayNum) {
       var msg = {
@@ -360,8 +398,10 @@ class _RandomWorldsState extends State<RandomWorlds> {
         'date': date,
         'dayNum': dayNum
       };
-      saveString(nodeMsg,msg);
-    print(nodeMsg+'保存了');
+      String saveTemp = JSON.jsonEncode(msg);
+      saveString(msg['message'],saveTemp);
+      //更新一下notelist
+      getAllData();
   }
 
   //时间选择器和日期选择器
@@ -395,7 +435,7 @@ class _RandomWorldsState extends State<RandomWorlds> {
 
   //跳转页面
   _navigateToMessageDetail(BuildContext context,message) async{
-    final result = await Navigator.push(context, MaterialPageRoute(builder: (context)=> nodeDetail(message:message,nodeDetailContrl:nodeDetailContrl,nodeDetailFocus:nodeDetailFocus)));
+    final result = await Navigator.push(context, MaterialPageRoute(builder: (context)=> nodeDetail(message:message)));
   }
 
 
@@ -409,31 +449,43 @@ class _RandomWorldsState extends State<RandomWorlds> {
 
 //获取存在SharedPreferences中的某一项数据
   Future getString(key) async {
+    var tempMap = new Map();
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     setState(() {
-      _storageString =
-          sharedPreferences.get(key);
+      tempMap =
+          JSON.jsonDecode(sharedPreferences.get(key));
     });
   }
 
   //获取所有数据
-  Future getAllString() async {
+  Future getAllData() async {
+    var tempList = new List();
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    setState(() {
-      Set<String> keys = sharedPreferences.getKeys();
+    Set<String> keys = sharedPreferences.getKeys();
+    if(keys!=''&&keys!=null){
       for (var item in keys) {
-        noteList.add(item);
+        var content = sharedPreferences.get(item);
+        Map msgMap =  JSON.jsonDecode(content);
+        tempList.add(msgMap);
       }
-    });
+      //将元素倒序排序（新node排在前面）
+      noteList = tempList.reversed.toList();
+      tempList = [];
+    }
   }
+
 
   //删除操作
   Future deleteString(key) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     //  key
     sharedPreferences.remove(key);
+  }
+  //删除操作
+  Future deleteAll() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     //清空所有
-    // sharedPreferences.clear();
+    sharedPreferences.clear();
   }
 
   //改操作

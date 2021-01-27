@@ -1,28 +1,45 @@
 import 'package:flutter/material.dart';
 
 class nodeDetail extends StatefulWidget {
-  const nodeDetail({Key key, @required this.message,@required this.nodeDetailContrl,@required this.nodeDetailFocus}) : super(key: key);
+  const nodeDetail({Key key, @required this.message}) : super(key: key);
   final Map message;
-  final TextEditingController nodeDetailContrl;
-  final FocusNode nodeDetailFocus;
   @override
-  _nodeDetailState createState() => _nodeDetailState(message:message,nodeDetailContrl:nodeDetailContrl,nodeDetailFocus:nodeDetailFocus);
+  _nodeDetailState createState() => _nodeDetailState(message:message);
 }
 
 class _nodeDetailState extends State<nodeDetail> {
-  _nodeDetailState({this.message,this.nodeDetailContrl,this.nodeDetailFocus});
+  _nodeDetailState({this.message});
   final Map message;
-  final TextEditingController nodeDetailContrl ;
-  final FocusNode nodeDetailFocus;
+
+  var nodeDetailContrl = new TextEditingController() ;
+  var nodeDetailFocus = new FocusNode();
+
+  var time;
+  var date;
+  var dayNum;
+
+  //是否被编辑
+  bool noChange = true;
+  bool noTime = false; //是否设置了时间
+  bool noDate = false; //是否设置了日期
+  bool noDayNum = false; //是否设置了天数
+
+  //是否更改信息
+  bool messageUpdate =  false;
+  bool timeUpdate = false;
+  bool dateUpdate = false;
+  bool dayNumUpdate = false;
+  bool updateAnyone = false;
+
+  @override
+  void initState() {
+    nodeDetailContrl.text = '${message['message']}';
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
 
-    //是否被编辑
-    bool noChange = true;
-    bool noTime = false; //是否设置了时间
-    bool noDate = false; //是否设置了日期
-    bool noDayNum = false; //是否设置了天数
-    nodeDetailContrl.text = '${message['message']}';
     print(message);
     if(message['time']==''||message['time']==null){
       noTime = true;
@@ -35,10 +52,42 @@ class _nodeDetailState extends State<nodeDetail> {
     }
 
 
+    if(messageUpdate==true||timeUpdate==true||dateUpdate==true||dayNumUpdate==true){
+      updateAnyone=true;
+    }else{
+      updateAnyone=false;
+    }
+
+    _judgeUpdate(){
+      if(nodeDetailContrl.text != message['message'] && nodeDetailContrl.text!=''&& nodeDetailContrl.text!=null){
+        messageUpdate=true;
+      }else{
+        messageUpdate=false;
+      }
+      if(time != message['time'] && time!=''&& time!=null){
+        timeUpdate=true;
+      }else{
+        timeUpdate=false;
+      }
+      if(date != message['date'] && date!=''&& date!=null){
+        dateUpdate=true;
+      }else{
+        dateUpdate=false;
+      }
+      if(dayNum != message['dayNum'] && dayNum!=''&& dayNum!=null){
+        dayNumUpdate=true;
+      }else{
+        dayNumUpdate=false;
+      }
+    };
+
     return Scaffold(
       resizeToAvoidBottomPadding: false,
       appBar: AppBar(
         title: Text('提醒事项'),
+        actions: [
+          updateAnyone ? TextButton.icon(onPressed: null, icon: Icon(Icons.done,color: Colors.blue,), label: Text('保存',style: TextStyle(color: Colors.blue),)) : Text('')
+        ]
       ),
       body: Center(
         child: Container(
@@ -65,6 +114,12 @@ class _nodeDetailState extends State<nodeDetail> {
                         fillColor: Color(0xffFFEFD5),
                         filled: true,
                       ),
+                      onChanged: (val){
+                        setState(() {
+                          nodeDetailContrl.text = val;
+                          _judgeUpdate();
+                        });
+                      },
                     ),
                   ),
                 ),
