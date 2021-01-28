@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:note01/widget/sharedPreferencesFunc.dart';
+import 'dayNumSelector.dart';
 
 class nodeDetail extends StatefulWidget {
   const nodeDetail({Key key, @required this.message}) : super(key: key);
   final Map message;
+
   @override
-  _nodeDetailState createState() => _nodeDetailState(message:message);
+  _nodeDetailState createState() => _nodeDetailState(message: message);
 }
 
 class _nodeDetailState extends State<nodeDetail> {
   _nodeDetailState({this.message});
+
   final Map message;
 
-  var nodeDetailContrl = new TextEditingController() ;
+  var _scaffoldkey = new GlobalKey<ScaffoldState>();
+  var nodeDetailContrl = new TextEditingController();
+  var dayNumInputContrl = new TextEditingController();
+  var dayNumInputFocus = new FocusNode();
+
   var nodeDetailFocus = new FocusNode();
 
   var time;
@@ -25,130 +35,292 @@ class _nodeDetailState extends State<nodeDetail> {
   bool noDayNum = false; //是否设置了天数
 
   //是否更改信息
-  bool messageUpdate =  false;
+  bool messageUpdate = false;
   bool timeUpdate = false;
   bool dateUpdate = false;
   bool dayNumUpdate = false;
   bool updateAnyone = false;
 
   @override
+  void dispose() {
+    nodeDetailContrl.dispose(); //避免内存泄露
+    super.dispose();
+  }
+
+  @override
   void initState() {
-    nodeDetailContrl.text = '${message['message']}';
     super.initState();
+    nodeDetailContrl.text = '${message['message']}';
+    time = message['time'];
+    date = message['date'];
+    dayNum = message['dayNum'];
+    nodeDetailContrl.addListener(() {
+      _judgeUpdate();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-
-    print(message);
-    if(message['time']==''||message['time']==null){
+    if (time == '' || time == null) {
       noTime = true;
     }
-    if(message['date']==''||message['date']==null){
+    if (date == '' || date == null) {
       noDate = true;
     }
-    if(message['dayNum']==''||message['dayNum']==null){
+    if (dayNum == '' || dayNum == null) {
       noDayNum = true;
     }
 
-
-    if(messageUpdate==true||timeUpdate==true||dateUpdate==true||dayNumUpdate==true){
-      updateAnyone=true;
-    }else{
-      updateAnyone=false;
+    if (messageUpdate == true ||
+        timeUpdate == true ||
+        dateUpdate == true ||
+        dayNumUpdate == true) {
+      updateAnyone = true;
+    } else {
+      updateAnyone = false;
     }
 
-    _judgeUpdate(){
-      if(nodeDetailContrl.text != message['message'] && nodeDetailContrl.text!=''&& nodeDetailContrl.text!=null){
-        messageUpdate=true;
-      }else{
-        messageUpdate=false;
-      }
-      if(time != message['time'] && time!=''&& time!=null){
-        timeUpdate=true;
-      }else{
-        timeUpdate=false;
-      }
-      if(date != message['date'] && date!=''&& date!=null){
-        dateUpdate=true;
-      }else{
-        dateUpdate=false;
-      }
-      if(dayNum != message['dayNum'] && dayNum!=''&& dayNum!=null){
-        dayNumUpdate=true;
-      }else{
-        dayNumUpdate=false;
-      }
-    };
+    _judgeUpdate();
+    print(message);
 
     return Scaffold(
+      key: _scaffoldkey,
       resizeToAvoidBottomPadding: false,
-      appBar: AppBar(
-        title: Text('提醒事项'),
-        actions: [
-          updateAnyone ? TextButton.icon(onPressed: null, icon: Icon(Icons.done,color: Colors.blue,), label: Text('保存',style: TextStyle(color: Colors.blue),)) : Text('')
-        ]
-      ),
-      body: Center(
-        child: Container(
-            margin: EdgeInsets.all(10),
-            child: Column(
-              children: [
-                new Expanded(
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(15))),
-                    elevation: 10,
-                    child: TextField(
-                      controller: nodeDetailContrl,
-                      autofocus: false,
-                      maxLines: 50,
-                      keyboardType: TextInputType.text,
-                      textInputAction: TextInputAction.done,
-                      decoration: InputDecoration(
-                        contentPadding: EdgeInsets.all(20),
-                        border: OutlineInputBorder(
-                            borderRadius:
-                            BorderRadius.circular(5),
-                            borderSide: BorderSide.none),
-                        fillColor: Color(0xffFFEFD5),
-                        filled: true,
+      appBar: AppBar(title: Text('提醒事项'), actions: [
+        updateAnyone
+            ? TextButton.icon(
+                onPressed: () {
+                  _saveAction(nodeDetailContrl.text, time, date, dayNum);
+                },
+                icon: Icon(
+                  Icons.done,
+                  color: Colors.blue,
+                  size: 15,
+                ),
+                label: Text(
+                  '保存',
+                  style: TextStyle(color: Colors.blue),
+                ))
+            : Text('')
+      ]),
+      body: new Builder(builder: (BuildContext context){
+        return Center(
+          child: Container(
+              margin: EdgeInsets.all(10),
+              child: Column(
+                children: [
+                  new Expanded(
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(15))),
+                      elevation: 10,
+                      child: TextField(
+                        controller: nodeDetailContrl,
+                        autofocus: false,
+                        maxLines: 50,
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.done,
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.all(20),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5),
+                              borderSide: BorderSide.none),
+                          fillColor: Color(0xffFFEFD5),
+                          filled: true,
+                        ),
                       ),
-                      onChanged: (val){
-                        setState(() {
-                          nodeDetailContrl.text = val;
-                          _judgeUpdate();
-                        });
-                      },
                     ),
                   ),
-                ),
-                new Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    new RaisedButton(
-                        color: Colors.blueGrey,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(7))),
-                        onPressed: (){},
-                        child: new Text(noTime? '设置时间' : '时间：${message['time']}',style: TextStyle(fontSize: 12,color: Colors.white),)),
-                    new RaisedButton(
-                        padding: EdgeInsets.all(5),
-                        color: Colors.blueGrey,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(7))),
-                        onPressed: (){},
-                        child: new Text(noDate? '设置日期' : '日期：${message['date']}',style: TextStyle(fontSize: 12,color: Colors.white),)),
-                    new RaisedButton(
-                        color: Colors.blueGrey,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(7))),
-                        onPressed: (){},
-                        child: new Text(noDayNum? '设置天数' : '持续：${message['dayNum']}天',style: TextStyle(fontSize: 12,color: Colors.white),))
-                  ],)
-              ],
-            )),
-      ),
+                  new Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      new RaisedButton(
+                          color: Colors.blueGrey,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(7))),
+                          onPressed: () {
+                            _showTimePicker();
+                          },
+                          child: new Text(
+                            noTime ? '设置时间' : '时间：${time}',
+                            style: TextStyle(fontSize: 12, color: Colors.white),
+                          )),
+                      new RaisedButton(
+                          padding: EdgeInsets.all(5),
+                          color: Colors.blueGrey,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(7))),
+                          onPressed: () {
+                            _showDatePicker();
+                          },
+                          child: new Text(
+                            noDate ? '设置日期' : '日期：${date}',
+                            style: TextStyle(fontSize: 12, color: Colors.white),
+                          )),
+                      new RaisedButton(
+                          color: Colors.blueGrey,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(7))),
+                          onPressed: () {
+                            showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    contentPadding: EdgeInsets.all(30),
+                                    actionsPadding:
+                                    EdgeInsets.fromLTRB(0, 0, 20, 0),
+                                    elevation: 50,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20)),
+                                    content: new Container(
+                                        child: new SizedBox(
+                                          child: TextField(
+                                            controller: dayNumInputContrl,
+                                            focusNode: dayNumInputFocus,
+                                            autofocus: false,
+                                            keyboardType: TextInputType.number,
+                                            inputFormatters: [
+                                              FilteringTextInputFormatter.digitsOnly,
+                                              LengthLimitingTextInputFormatter(3)
+                                            ],
+                                            maxLines: 1,
+                                            textInputAction: TextInputAction.done,
+                                            decoration: InputDecoration(
+                                                prefixIcon:
+                                                Icon(Icons.calendar_today),
+                                                contentPadding: EdgeInsets.fromLTRB(
+                                                    50, 10, 0, 10),
+                                                labelText: '输入天数',
+                                                labelStyle: TextStyle(
+                                                    color: Colors.blue, fontSize: 15),
+                                                border: OutlineInputBorder(
+                                                    borderRadius:
+                                                    BorderRadius.circular(8),
+                                                    borderSide: BorderSide(
+                                                      width: 1,
+                                                      color: Colors.red,
+                                                      style: BorderStyle.solid,
+                                                    ))),
+                                          ),
+                                        )),
+                                    actions: [
+                                      new Row(
+                                        children: [
+                                          new TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop('ok');
+                                              if (dayNumInputContrl.text !=
+                                                  null &&
+                                                  dayNumInputContrl.text != '') {
+                                                _dayInputFunc();
+                                                print(dayNumInputContrl.text);
+                                              }else{
+                                                _scaffoldkey.currentState.showSnackBar(SnackBar(
+                                                  content: Text('没有变更'),
+                                                  duration: Duration(milliseconds: 800),
+                                                ));
+                                              }
+                                            },
+                                            child: Text(
+                                              '保存',
+                                              style: TextStyle(
+                                                  color: Colors.blue,
+                                                  fontSize: 15),
+                                            ),
+                                          ),
+                                          new TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context)
+                                                    .pop('cancel');
+                                                dayNumInputContrl.clear();
+                                              },
+                                              child: Text('取消',
+                                                  style: TextStyle(
+                                                      color: Colors.blueGrey,
+                                                      fontSize: 15))),
+                                        ],
+                                      )
+                                    ],
+                                  );
+                                });
+                          },
+                          child: new Text(
+                            noDayNum ? '设置天数' : '持续：${dayNum}天',
+                            style: TextStyle(fontSize: 12, color: Colors.white),
+                          ))
+                    ],
+                  )
+                ],
+              )),
+        );
+      })
     );
   }
+
+  _dayInputFunc() {
+    setState(() {
+      dayNum = dayNumInputContrl.text;
+      dayNumUpdate = true;
+    });
+  }
+
+  _saveAction(nodeMsg, time, date, dayNum) {
+    var msg = {
+      'key': message['key'],
+      'message': nodeMsg,
+      'time': time,
+      'date': date,
+      'dayNum': dayNum
+    };
+    sharedPerencesFunc().updateString(message['key'], msg);
+  }
+
+  _judgeUpdate() {
+    if (nodeDetailContrl.text != message['message'] &&
+        nodeDetailContrl.text != '' &&
+        nodeDetailContrl.text != null) {
+      messageUpdate = true;
+    } else {
+      messageUpdate = false;
+    }
+    if (time != message['time'] && time != '' && time != null) {
+      timeUpdate = true;
+    } else {
+      timeUpdate = false;
+    }
+    if (date != message['date'] && date != '' && date != null) {
+      dateUpdate = true;
+    } else {
+      dateUpdate = false;
+    }
+    if (dayNum != message['dayNum'] && dayNum != '' && dayNum != null) {
+      dayNumUpdate = true;
+    } else {
+      dayNumUpdate = false;
+    }
+  }
+
+  _showTimePicker() async {
+    var picker =
+        await showTimePicker(context: context, initialTime: TimeOfDay.now());
+    setState(() {
+      var _tempTime = picker.toString().substring(10, 15);
+      time = _tempTime;
+    });
+  }
+
+  _showDatePicker() async {
+    Locale mylocale = Localizations.localeOf(context);
+    var picker = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime.now(),
+        lastDate: DateTime(2040),
+        locale: mylocale);
+    setState(() {
+      var _tempDate = picker.toString().substring(0, 9);
+      date = _tempDate;
+    });
+  }
 }
-
-
-

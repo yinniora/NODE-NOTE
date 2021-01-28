@@ -1,7 +1,8 @@
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'widget/dayNumSelector.dart';
 import 'widget/nodeDetail.dart';
@@ -392,14 +393,20 @@ class _RandomWorldsState extends State<RandomWorlds> {
 
   //保存信息到集合
   saveAction(nodeMsg,time,date,dayNum) {
+    String randomNum='';
+    for(int i=0; i<4;i++){
+      var temp = Random().nextInt(10);
+      randomNum += temp.toString();
+    }
       var msg = {
+        'key' : nodeMsg+"("+randomNum+")",
         'message': nodeMsg,
         'time': time,
         'date': date,
         'dayNum': dayNum
       };
       String saveTemp = JSON.jsonEncode(msg);
-      saveString(msg['message'],saveTemp);
+      saveString(msg['key'],saveTemp);
       //更新一下notelist
       getAllData();
   }
