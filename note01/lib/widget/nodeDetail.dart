@@ -1,8 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:note01/widget/sharedPreferencesFunc.dart';
 import 'dayNumSelector.dart';
+import 'dart:convert' as JSON;
 
 class nodeDetail extends StatefulWidget {
   const nodeDetail({Key key, @required this.message}) : super(key: key);
@@ -24,9 +26,9 @@ class _nodeDetailState extends State<nodeDetail> {
 
   var nodeDetailFocus = new FocusNode();
 
-  var time;
-  var date;
-  var dayNum;
+  var time='';
+  var date='';
+  var dayNum='';
 
   //是否被编辑
   bool noChange = true;
@@ -70,7 +72,6 @@ class _nodeDetailState extends State<nodeDetail> {
     if (dayNum == '' || dayNum == null) {
       noDayNum = true;
     }
-
     if (messageUpdate == true ||
         timeUpdate == true ||
         dateUpdate == true ||
@@ -79,17 +80,22 @@ class _nodeDetailState extends State<nodeDetail> {
     } else {
       updateAnyone = false;
     }
-
-    _judgeUpdate();
     print(message);
 
     return Scaffold(
       key: _scaffoldkey,
       resizeToAvoidBottomPadding: false,
-      appBar: AppBar(title: Text('提醒事项'), actions: [
+      appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: new IconButton(icon: Icon(Icons.arrow_back_ios), onPressed: (){
+            nodeDetailFocus.unfocus();
+            _backActionJudage();}),
+          title: Text('提醒事项'), actions: [
         updateAnyone
             ? TextButton.icon(
                 onPressed: () {
+                  nodeDetailFocus.unfocus();
+                  Navigator.pop(context,nodeDetailContrl.text);
                   _saveAction(nodeDetailContrl.text, time, date, dayNum);
                 },
                 icon: Icon(
@@ -116,6 +122,7 @@ class _nodeDetailState extends State<nodeDetail> {
                       elevation: 10,
                       child: TextField(
                         controller: nodeDetailContrl,
+                        focusNode: nodeDetailFocus,
                         autofocus: false,
                         maxLines: 50,
                         keyboardType: TextInputType.text,
@@ -162,7 +169,7 @@ class _nodeDetailState extends State<nodeDetail> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.all(Radius.circular(7))),
                           onPressed: () {
-                            showDialog(
+                            showCupertinoDialog(
                                 context: context,
                                 barrierDismissible: false,
                                 builder: (BuildContext context) {
@@ -213,7 +220,7 @@ class _nodeDetailState extends State<nodeDetail> {
                                               if (dayNumInputContrl.text !=
                                                   null &&
                                                   dayNumInputContrl.text != '') {
-                                                _dayInputFunc();
+                                                _dayInputSave();
                                                 print(dayNumInputContrl.text);
                                               }else{
                                                 _scaffoldkey.currentState.showSnackBar(SnackBar(
@@ -258,11 +265,60 @@ class _nodeDetailState extends State<nodeDetail> {
     );
   }
 
-  _dayInputFunc() {
+  _dayInputSave() {
     setState(() {
       dayNum = dayNumInputContrl.text;
       dayNumUpdate = true;
+      noDayNum = false;
     });
+  }
+  
+  _backActionJudage(){
+    if(nodeDetailContrl.text==message['message'] && time==message['time'] && date==message['date'] && dayNum==message['dayNum']){
+      Navigator.pop(context);
+    }else{
+      showCupertinoDialog(
+          context: context,
+          barrierDismissible: false, //防止用户在弹出筐外点击消失
+          builder: (BuildContext context) {
+            return AlertDialog(
+              contentPadding: EdgeInsets.all(30),
+              actionsPadding:
+              EdgeInsets.fromLTRB(0, 0, 20, 0),
+              elevation: 50,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              content: new Text('有更改，是否保存？'),
+              actions: [
+                new Row(
+                  children: [
+                    new TextButton(
+                      onPressed: () {
+                        _saveAction(nodeDetailContrl.text, time, date, dayNum);
+                        Navigator.of(context).pop(true);
+                      },
+                      child: Text(
+                        '保存',
+                        style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: 15),
+                      ),
+                    ),
+                    new TextButton(
+                        onPressed: () {
+                          Navigator.of(context)
+                              .pop(false);
+                        },
+                        child: Text('不保存',
+                            style: TextStyle(
+                                color: Colors.blue,
+                                fontSize: 15))),
+                  ],
+                )
+              ],
+            );
+          }).whenComplete(() => Navigator.pop(context));
+    }
   }
 
   _saveAction(nodeMsg, time, date, dayNum) {
@@ -273,32 +329,35 @@ class _nodeDetailState extends State<nodeDetail> {
       'date': date,
       'dayNum': dayNum
     };
-    sharedPerencesFunc().updateString(message['key'], msg);
+    String msgTemp = JSON.jsonEncode(msg);
+    sharedPerencesFunc().updateString(message['key'], msgTemp);
   }
 
   _judgeUpdate() {
-    if (nodeDetailContrl.text != message['message'] &&
-        nodeDetailContrl.text != '' &&
-        nodeDetailContrl.text != null) {
-      messageUpdate = true;
-    } else {
-      messageUpdate = false;
-    }
-    if (time != message['time'] && time != '' && time != null) {
-      timeUpdate = true;
-    } else {
-      timeUpdate = false;
-    }
-    if (date != message['date'] && date != '' && date != null) {
-      dateUpdate = true;
-    } else {
-      dateUpdate = false;
-    }
-    if (dayNum != message['dayNum'] && dayNum != '' && dayNum != null) {
-      dayNumUpdate = true;
-    } else {
-      dayNumUpdate = false;
-    }
+    setState(() {
+      if (nodeDetailContrl.text != message['message'] &&
+          nodeDetailContrl.text != '' &&
+          nodeDetailContrl.text != null) {
+        messageUpdate = true;
+      } else {
+        messageUpdate = false;
+      }
+      if (time != message['time'] && time != '' && time != null) {
+        timeUpdate = true;
+      } else {
+        timeUpdate = false;
+      }
+      if (date != message['date'] && date != '' && date != null) {
+        dateUpdate = true;
+      } else {
+        dateUpdate = false;
+      }
+      if (dayNum != message['dayNum'] && dayNum != '' && dayNum != null) {
+        dayNumUpdate = true;
+      } else {
+        dayNumUpdate = false;
+      }
+    });
   }
 
   _showTimePicker() async {
@@ -307,6 +366,8 @@ class _nodeDetailState extends State<nodeDetail> {
     setState(() {
       var _tempTime = picker.toString().substring(10, 15);
       time = _tempTime;
+      timeUpdate = true;
+      noTime = false;
     });
   }
 
@@ -321,6 +382,8 @@ class _nodeDetailState extends State<nodeDetail> {
     setState(() {
       var _tempDate = picker.toString().substring(0, 9);
       date = _tempDate;
+      dateUpdate = true;
+      noDate = false;
     });
   }
 }
