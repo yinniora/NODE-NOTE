@@ -26,9 +26,9 @@ class _nodeDetailState extends State<nodeDetail> {
 
   var nodeDetailFocus = new FocusNode();
 
-  var time='';
-  var date='';
-  var dayNum='';
+  var time = '';
+  var date = '';
+  var dayNum = '';
 
   //是否被编辑
   bool noChange = true;
@@ -83,186 +83,203 @@ class _nodeDetailState extends State<nodeDetail> {
     print(message);
 
     return Scaffold(
-      key: _scaffoldkey,
-      resizeToAvoidBottomPadding: false,
-      appBar: AppBar(
-          automaticallyImplyLeading: false,
-          leading: new IconButton(icon: Icon(Icons.arrow_back_ios), onPressed: (){
-            nodeDetailFocus.unfocus();
-            _backActionJudage();}),
-          title: Text('提醒事项'), actions: [
-        updateAnyone
-            ? TextButton.icon(
+        key: _scaffoldkey,
+        resizeToAvoidBottomPadding: false,
+        appBar: AppBar(
+            automaticallyImplyLeading: false,
+            leading: new IconButton(
+                icon: Icon(Icons.arrow_back_ios),
                 onPressed: () {
                   nodeDetailFocus.unfocus();
-                  Navigator.pop(context,nodeDetailContrl.text);
-                  _saveAction(nodeDetailContrl.text, time, date, dayNum);
-                },
-                icon: Icon(
-                  Icons.done,
-                  color: Colors.blue,
-                  size: 15,
-                ),
-                label: Text(
-                  '保存',
-                  style: TextStyle(color: Colors.blue),
-                ))
-            : Text('')
-      ]),
-      body: new Builder(builder: (BuildContext context){
-        return Center(
-          child: Container(
-              margin: EdgeInsets.all(10),
-              child: Column(
-                children: [
-                  new Expanded(
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(15))),
-                      elevation: 10,
-                      child: TextField(
-                        controller: nodeDetailContrl,
-                        focusNode: nodeDetailFocus,
-                        autofocus: false,
-                        maxLines: 50,
-                        keyboardType: TextInputType.text,
-                        textInputAction: TextInputAction.done,
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.all(20),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(5),
-                              borderSide: BorderSide.none),
-                          fillColor: Color(0xffFFEFD5),
-                          filled: true,
+                  _backActionJudage();
+                }),
+            title: Text('提醒事项'),
+            actions: [
+              updateAnyone
+                  ? TextButton.icon(
+                      onPressed: () {
+                        nodeDetailFocus.unfocus();
+                        Navigator.pop(context, nodeDetailContrl.text);
+                        _saveAction(nodeDetailContrl.text, time, date, dayNum);
+                      },
+                      icon: Icon(
+                        Icons.done,
+                        color: Colors.blue,
+                        size: 15,
+                      ),
+                      label: Text(
+                        '保存',
+                        style: TextStyle(color: Colors.blue),
+                      ))
+                  : Text('')
+            ]),
+        body: new Builder(builder: (BuildContext context) {
+          return Center(
+            child: Container(
+                margin: EdgeInsets.all(10),
+                child: Column(
+                  children: [
+                    new Expanded(
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(15))),
+                        elevation: 10,
+                        child: TextField(
+                          controller: nodeDetailContrl,
+                          focusNode: nodeDetailFocus,
+                          autofocus: false,
+                          maxLines: 50,
+                          keyboardType: TextInputType.text,
+                          textInputAction: TextInputAction.done,
+                          decoration: InputDecoration(
+                            contentPadding: EdgeInsets.all(20),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5),
+                                borderSide: BorderSide.none),
+                            fillColor: Color(0xffFFEFD5),
+                            filled: true,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  new Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      new RaisedButton(
-                          color: Colors.blueGrey,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(7))),
-                          onPressed: () {
-                            _showTimePicker();
-                          },
-                          child: new Text(
-                            noTime ? '设置时间' : '时间：${time}',
-                            style: TextStyle(fontSize: 12, color: Colors.white),
-                          )),
-                      new RaisedButton(
-                          padding: EdgeInsets.all(5),
-                          color: Colors.blueGrey,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(7))),
-                          onPressed: () {
-                            _showDatePicker();
-                          },
-                          child: new Text(
-                            noDate ? '设置日期' : '日期：${date}',
-                            style: TextStyle(fontSize: 12, color: Colors.white),
-                          )),
-                      new RaisedButton(
-                          color: Colors.blueGrey,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(7))),
-                          onPressed: () {
-                            showCupertinoDialog(
-                                context: context,
-                                barrierDismissible: false,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    contentPadding: EdgeInsets.all(30),
-                                    actionsPadding:
-                                    EdgeInsets.fromLTRB(0, 0, 20, 0),
-                                    elevation: 50,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20)),
-                                    content: new Container(
-                                        child: new SizedBox(
-                                          child: TextField(
-                                            controller: dayNumInputContrl,
-                                            focusNode: dayNumInputFocus,
-                                            autofocus: false,
-                                            keyboardType: TextInputType.number,
-                                            inputFormatters: [
-                                              FilteringTextInputFormatter.digitsOnly,
-                                              LengthLimitingTextInputFormatter(3)
-                                            ],
-                                            maxLines: 1,
-                                            textInputAction: TextInputAction.done,
-                                            decoration: InputDecoration(
-                                                prefixIcon:
-                                                Icon(Icons.calendar_today),
-                                                contentPadding: EdgeInsets.fromLTRB(
-                                                    50, 10, 0, 10),
-                                                labelText: '输入天数',
-                                                labelStyle: TextStyle(
-                                                    color: Colors.blue, fontSize: 15),
-                                                border: OutlineInputBorder(
-                                                    borderRadius:
-                                                    BorderRadius.circular(8),
-                                                    borderSide: BorderSide(
-                                                      width: 1,
-                                                      color: Colors.red,
-                                                      style: BorderStyle.solid,
-                                                    ))),
-                                          ),
-                                        )),
-                                    actions: [
-                                      new Row(
-                                        children: [
-                                          new TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop('ok');
-                                              if (dayNumInputContrl.text !=
-                                                  null &&
-                                                  dayNumInputContrl.text != '') {
-                                                _dayInputSave();
-                                                print(dayNumInputContrl.text);
-                                              }else{
-                                                _scaffoldkey.currentState.showSnackBar(SnackBar(
-                                                  content: Text('没有变更'),
-                                                  duration: Duration(milliseconds: 800),
-                                                ));
-                                              }
-                                            },
-                                            child: Text(
-                                              '保存',
-                                              style: TextStyle(
+                    new Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        new RaisedButton(
+                            color: Colors.blueGrey,
+                            shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(7))),
+                            onPressed: () {
+                              _showTimePicker();
+                            },
+                            child: new Text(
+                              noTime ? '设置时间' : '时间：${time}',
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.white),
+                            )),
+                        new RaisedButton(
+                            padding: EdgeInsets.all(5),
+                            color: Colors.blueGrey,
+                            shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(7))),
+                            onPressed: () {
+                              _showDatePicker();
+                            },
+                            child: new Text(
+                              noDate ? '设置日期' : '日期：${date}',
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.white),
+                            )),
+                        new RaisedButton(
+                            color: Colors.blueGrey,
+                            shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(7))),
+                            onPressed: () {
+                              showCupertinoDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      contentPadding: EdgeInsets.all(30),
+                                      actionsPadding:
+                                          EdgeInsets.fromLTRB(0, 0, 20, 0),
+                                      elevation: 50,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(20)),
+                                      content: new Container(
+                                          child: new SizedBox(
+                                        child: TextField(
+                                          controller: dayNumInputContrl,
+                                          focusNode: dayNumInputFocus,
+                                          autofocus: false,
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly,
+                                            LengthLimitingTextInputFormatter(3)
+                                          ],
+                                          maxLines: 1,
+                                          textInputAction: TextInputAction.done,
+                                          decoration: InputDecoration(
+                                              prefixIcon:
+                                                  Icon(Icons.calendar_today),
+                                              contentPadding:
+                                                  EdgeInsets.fromLTRB(
+                                                      50, 10, 0, 10),
+                                              labelText: '输入天数',
+                                              labelStyle: TextStyle(
                                                   color: Colors.blue,
                                                   fontSize: 15),
-                                            ),
-                                          ),
-                                          new TextButton(
+                                              border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  borderSide: BorderSide(
+                                                    width: 1,
+                                                    color: Colors.red,
+                                                    style: BorderStyle.solid,
+                                                  ))),
+                                        ),
+                                      )),
+                                      actions: [
+                                        new Row(
+                                          children: [
+                                            new TextButton(
                                               onPressed: () {
-                                                Navigator.of(context)
-                                                    .pop('cancel');
-                                                dayNumInputContrl.clear();
+                                                Navigator.of(context).pop('ok');
+                                                if (dayNumInputContrl.text !=
+                                                        null &&
+                                                    dayNumInputContrl.text !=
+                                                        '') {
+                                                  _dayInputSave();
+                                                  print(dayNumInputContrl.text);
+                                                } else {
+                                                  _scaffoldkey.currentState
+                                                      .showSnackBar(SnackBar(
+                                                    content: Text('没有变更'),
+                                                    duration: Duration(
+                                                        milliseconds: 800),
+                                                  ));
+                                                }
                                               },
-                                              child: Text('取消',
-                                                  style: TextStyle(
-                                                      color: Colors.blueGrey,
-                                                      fontSize: 15))),
-                                        ],
-                                      )
-                                    ],
-                                  );
-                                });
-                          },
-                          child: new Text(
-                            noDayNum ? '设置天数' : '持续：${dayNum}天',
-                            style: TextStyle(fontSize: 12, color: Colors.white),
-                          ))
-                    ],
-                  )
-                ],
-              )),
-        );
-      })
-    );
+                                              child: Text(
+                                                '保存',
+                                                style: TextStyle(
+                                                    color: Colors.blue,
+                                                    fontSize: 15),
+                                              ),
+                                            ),
+                                            new TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context)
+                                                      .pop('cancel');
+                                                  dayNumInputContrl.clear();
+                                                },
+                                                child: Text('取消',
+                                                    style: TextStyle(
+                                                        color: Colors.blueGrey,
+                                                        fontSize: 15))),
+                                          ],
+                                        )
+                                      ],
+                                    );
+                                  });
+                            },
+                            child: new Text(
+                              noDayNum ? '设置天数' : '持续：${dayNum}天',
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.white),
+                            ))
+                      ],
+                    )
+                  ],
+                )),
+          );
+        }));
   }
 
   _dayInputSave() {
@@ -272,19 +289,21 @@ class _nodeDetailState extends State<nodeDetail> {
       noDayNum = false;
     });
   }
-  
-  _backActionJudage(){
-    if(nodeDetailContrl.text==message['message'] && time==message['time'] && date==message['date'] && dayNum==message['dayNum']){
+
+  _backActionJudage() {
+    if (nodeDetailContrl.text == message['message'] &&
+        time == message['time'] &&
+        date == message['date'] &&
+        dayNum == message['dayNum']) {
       Navigator.pop(context);
-    }else{
+    } else {
       showCupertinoDialog(
           context: context,
           barrierDismissible: false, //防止用户在弹出筐外点击消失
           builder: (BuildContext context) {
             return AlertDialog(
               contentPadding: EdgeInsets.all(30),
-              actionsPadding:
-              EdgeInsets.fromLTRB(0, 0, 20, 0),
+              actionsPadding: EdgeInsets.fromLTRB(0, 0, 20, 0),
               elevation: 50,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
@@ -299,20 +318,16 @@ class _nodeDetailState extends State<nodeDetail> {
                       },
                       child: Text(
                         '保存',
-                        style: TextStyle(
-                            color: Colors.blue,
-                            fontSize: 15),
+                        style: TextStyle(color: Colors.blue, fontSize: 15),
                       ),
                     ),
                     new TextButton(
                         onPressed: () {
-                          Navigator.of(context)
-                              .pop(false);
+                          Navigator.of(context).pop(false);
                         },
                         child: Text('不保存',
-                            style: TextStyle(
-                                color: Colors.blue,
-                                fontSize: 15))),
+                            style:
+                                TextStyle(color: Colors.blue, fontSize: 15))),
                   ],
                 )
               ],
@@ -361,14 +376,26 @@ class _nodeDetailState extends State<nodeDetail> {
   }
 
   _showTimePicker() async {
-    var picker =
-        await showTimePicker(context: context, initialTime: TimeOfDay.now());
-    setState(() {
-      var _tempTime = picker.toString().substring(10, 15);
-      time = _tempTime;
-      timeUpdate = true;
-      noTime = false;
-    });
+    var picker = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+        builder: (context, child) {
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            child: Theme(
+              data: ThemeData.light(),
+              child: child,
+            ),
+          );
+        });
+    if (picker != null) {
+      setState(() {
+        var _tempTime = picker.toString().substring(10, 15);
+        time = _tempTime;
+        timeUpdate = true;
+        noTime = false;
+      });
+    }
   }
 
   _showDatePicker() async {
@@ -378,12 +405,23 @@ class _nodeDetailState extends State<nodeDetail> {
         initialDate: DateTime.now(),
         firstDate: DateTime.now(),
         lastDate: DateTime(2040),
-        locale: mylocale);
-    setState(() {
-      var _tempDate = picker.toString().substring(0, 9);
-      date = _tempDate;
-      dateUpdate = true;
-      noDate = false;
-    });
+        locale: mylocale,
+        builder: (context, child) {
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            child: Theme(
+              data: ThemeData.light(),
+              child: child,
+            ),
+          );
+        });
+    if (picker != null) {
+      setState(() {
+        var _tempDate = picker.toString().substring(0, 10);
+        date = _tempDate;
+        dateUpdate = true;
+        noDate = false;
+      });
+    }
   }
 }
