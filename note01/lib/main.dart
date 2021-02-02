@@ -8,6 +8,11 @@ import 'widget/dayNumSelector.dart';
 import 'widget/nodeDetail.dart';
 import 'dart:convert' as JSON;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
+FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+
 
 void main() => runApp(MyApp());
 
@@ -48,6 +53,7 @@ class _RandomWorldsState extends State<RandomWorlds> {
   bool selected = true;
   bool noNodes = true; //有没有已经存储的提醒
 
+
   @override
   void initState() {
     super.initState();
@@ -59,15 +65,13 @@ class _RandomWorldsState extends State<RandomWorlds> {
     AndroidInitializationSettings('app_icon');
     final IOSInitializationSettings initializationSettingsIOS =
     IOSInitializationSettings(
-        requestSoundPermission: false,
-        requestBadgePermission: false,
-        requestAlertPermission: false,
         onDidReceiveLocalNotification: onDidReceiveLocalNotification);
     final InitializationSettings initializationSettings = InitializationSettings(
         android: initializationSettingsAndroid,
         iOS: initializationSettingsIOS);
     flutterLocalNotificationsPlugin.initialize(initializationSettings,
         onSelectNotification: onSelectNotification);
+    tz.initializeTimeZones();
   }
 
   @override
@@ -76,6 +80,8 @@ class _RandomWorldsState extends State<RandomWorlds> {
     print(noteList);
     // deleteAll();
     // noteList.clear();
+
+
     return Scaffold(
       resizeToAvoidBottomPadding: false,
       appBar: AppBar(
@@ -550,10 +556,92 @@ class _RandomWorldsState extends State<RandomWorlds> {
   *    手机通知设置
   *
   * */
+
+  //安卓定时通知处理方法
+  Future _showScheduledDateNotification(time) async {
+    //安卓的通知配置，必填参数是渠道id, 名称, 和描述, 可选填通知的图标，重要度等等。
+    var androidPlatformChannelSpecifics =
+    new AndroidNotificationDetails(
+        '0', 'your channel name', 'your channel description',
+        icon: 'app_icon',
+        importance: Importance.max,
+        priority: Priority.high,
+        ticker: 'ticker'
+    );
+    NotificationDetails platformChannelSpecifics =
+    new NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+        0, 'NODE & NOTE', '提醒事项：',_scheduledDate(time), platformChannelSpecifics,
+        androidAllowWhileIdle: true,
+        payload: 'item x',uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime);
+  }
+  tz.TZDateTime _scheduledDate(time) {
+    tz.TZDateTime scheduledDate =
+    tz.TZDateTime.parse(tz.local, time);
+    return scheduledDate;
+  }
+
+
+  //删除单个通知
+  Future _cancelNotification(notiId) async {
+    //参数 0 为需要删除的通知的id
+    await flutterLocalNotificationsPlugin.cancel(notiId);
+  }
+//删除所有通知
+  Future _cancelAllNotifications() async {
+    await flutterLocalNotificationsPlugin.cancelAll();
+  }
+
+
+
+
+
+  //在适当的位置 申请手机通知权限
+  _useIOSNotification() async{
+    final bool result = await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  }
+
+  _useZonedSchedule() async{
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+        0,
+        'scheduled title',
+        'scheduled body',
+        tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5)),
+        const NotificationDetails(
+            android: AndroidNotificationDetails('your channel id',
+                'your channel name', 'your channel description')),
+        androidAllowWhileIdle: true,
+        uiLocalNotificationDateInterpretation:
+        UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time
+    );
+  }
+  //定期显示指定间隔的通知 (默认每天一次)
+  Future _periodicallyDailyShow() async{
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    AndroidNotificationDetails('repeating channel id',
+        'repeating channel name', 'repeating description');
+    const NotificationDetails platformChannelSpecifics =
+    NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.periodicallyShow(0, 'repeating title',
+        'repeating body', RepeatInterval.daily, platformChannelSpecifics,
+        androidAllowWhileIdle: true);
+  }
+
   //点击通知后应触发的函数
   Future onSelectNotification(String payload) async {
     if (payload != null) {
       debugPrint('notification payload: $payload');
+    }
+    //payload 可作为通知的一个标记，区分点击的通知。
+    if(payload != null && payload == "complete") {
     }
   }
   //ios通知处理方法
@@ -578,43 +666,4 @@ class _RandomWorldsState extends State<RandomWorlds> {
           ),
     );
   }
-  //安卓通知处理方法
-  Future _showNotification() async {
-    //安卓的通知配置，必填参数是渠道id, 名称, 和描述, 可选填通知的图标，重要度等等。
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-    AndroidNotificationDetails(
-        'your channel id', 'your channel name', 'your channel description',
-        importance: Importance.max,
-        priority: Priority.high,
-        showWhen: false);
-    const NotificationDetails platformChannelSpecifics =
-    NotificationDetails(android: androidPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.show(
-        0, 'plain title', 'plain body', platformChannelSpecifics,
-        payload: 'item x');
-  }
-
-  //定期显示指定间隔的通知 (默认每天一次)
-  Future _periodicallyDailyShow() async{
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-    AndroidNotificationDetails('repeating channel id',
-        'repeating channel name', 'repeating description');
-    const NotificationDetails platformChannelSpecifics =
-    NotificationDetails(android: androidPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.periodicallyShow(0, 'repeating title',
-        'repeating body', RepeatInterval.daily, platformChannelSpecifics,
-        androidAllowWhileIdle: true);
-  }
-
-  //删除单个通知
-  Future _cancelNotification() async {
-    //参数 0 为需要删除的通知的id
-    await flutterLocalNotificationsPlugin.cancel(0);
-  }
-//删除所有通知
-  Future _cancelAllNotifications() async {
-    await flutterLocalNotificationsPlugin.cancelAll();
-  }
-
-
 }
