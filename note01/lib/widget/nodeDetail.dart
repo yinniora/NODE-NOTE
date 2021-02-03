@@ -342,7 +342,8 @@ class _nodeDetailState extends State<nodeDetail> {
       'message': nodeMsg,
       'time': time,
       'date': date,
-      'dayNum': dayNum
+      'dayNum': dayNum,
+      'storeTime': DateTime.now().toString()
     };
     String msgTemp = JSON.jsonEncode(msg);
     sharedPerencesFunc().updateString(message['key'], msgTemp);

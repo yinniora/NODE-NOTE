@@ -54,11 +54,8 @@ class _RandomWorldsState extends State<RandomWorlds> {
   @override
   void initState() {
     super.initState();
-    //开启软件时初始化数组元素
+    //开启软件时初始化数组元素以及添加本地提醒
     getAllData().then((value) => noteList = value);
-    //  初始化所有的通知任务（防止二次添加，先清除所有的）
-    _cancelAllNotifications();
-    print(noteList);
 
     //通知初始化
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -78,6 +75,8 @@ class _RandomWorldsState extends State<RandomWorlds> {
   @override
   Widget build(BuildContext context) {
     getAllData().then((value) => noteList = value);
+    //初始化通知
+    _initNotifications(noteList);
     // deleteAll();
     // noteList.clear();
 
@@ -444,6 +443,27 @@ class _RandomWorldsState extends State<RandomWorlds> {
     );
   }
 
+  _initNotifications(List _list){
+    _cancelAllNotifications();
+    for(var item in _list){
+      //需要判断在有日期有时间没有天数的情况下，日期是否过期
+      if(item['date']!=null&&item['date']!=''&&item['time']!=null&&item['time']!=''&&(item['dayNum']==null||item['dayNum']=='')){
+        int _year = int.parse(item['date'].substring(0,4));
+        int _month = int.parse(item['date'].substring(5,7));
+        int _days = int.parse(item['date'].substring(8));
+        DateTime scheduleDate = DateTime(_year,_month,_days);
+        DateTime now = DateTime.now();
+        if(scheduleDate.isAfter(now)){
+          _showDateTimeDaysNotification(item['date'],item['time'],item['dayNum'],item['storeTime'],item['message']);
+        }else{
+          return;
+        }
+      }else{
+        _showDateTimeDaysNotification(item['date'],item['time'],item['dayNum'],item['storeTime'],item['message']);
+      }
+    }
+  }
+
   //保存信息到集合
   saveAction(nodeMsg, time, date, dayNum) {
     String randomNum = '';
@@ -456,7 +476,8 @@ class _RandomWorldsState extends State<RandomWorlds> {
       'message': nodeMsg,
       'time': time,
       'date': date,
-      'dayNum': dayNum
+      'dayNum': dayNum,
+      'storeTime': DateTime.now().toString()
     };
     String saveTemp = JSON.jsonEncode(msg);
     saveString(msg['key'], saveTemp);
@@ -641,9 +662,8 @@ class _RandomWorldsState extends State<RandomWorlds> {
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime);
   }
-
   tz.TZDateTime _scheduledDate(String _date, String _time) {
-    String _dateTime = _date + 'T' + _time + ':00Z';
+    String _dateTime = _date + ' ' + _time;
     tz.TZDateTime scheduledDate = tz.TZDateTime.parse(tz.local, _dateTime);
     print(tz.TZDateTime.now(tz.local));
     return scheduledDate;
@@ -666,10 +686,9 @@ class _RandomWorldsState extends State<RandomWorlds> {
             UILocalNotificationDateInterpretation.absoluteTime,
         androidAllowWhileIdle: true);
   }
-
   tz.TZDateTime _scheduledDailyDate(String _time) {
-    int _hours = int.parse(_time.substring(0, 1));
-    int _minutes = int.parse(_time.substring(3, 4));
+    int _hours = int.parse(_time.substring(0,2));
+    int _minutes = int.parse(_time.substring(3,5));
     tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate =
         tz.TZDateTime(tz.local, now.year, now.month, now.day, _hours, _minutes);
@@ -677,6 +696,134 @@ class _RandomWorldsState extends State<RandomWorlds> {
       scheduledDate.add(Duration(days: 1));
     }
     return scheduledDate;
+  }
+
+  //优化通知
+  Future _showDateTimeDaysNotification(String _date,String _time,String _dayNum,String _storeTime,String _message) async {
+    var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
+        '1', 'channelName', 'channelDescription',
+        icon: 'app_icon',
+        importance: Importance.high,
+        priority: Priority.max,
+        ticker: 'ticker1');
+    NotificationDetails platformChannelSpecifics =
+    new NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.zonedSchedule(1000, 'NODE & NOTE',
+        '提醒事项：${_message}', _scheduledDateTimeDays(_date,_time,_dayNum,_storeTime), platformChannelSpecifics,
+        uiLocalNotificationDateInterpretation:
+        UILocalNotificationDateInterpretation.absoluteTime,
+        androidAllowWhileIdle: true);
+  }
+  tz.TZDateTime _scheduledDateTimeDays(String _date,String _time,String _dayNum,String _storeTime) {
+    var _dayNumTemp = 0;
+    if(_time!=null&&_time!=''){
+      if(_date!=null&&_date!=''){
+        if(_dayNum!=null&&_dayNum!=''){
+          //有时间有日期有天数
+          int _year = int.parse(_date.substring(0,4));
+          int _month = int.parse(_date.substring(5,7));
+          int _days = int.parse(_date.substring(8));
+          int _hours = int.parse(_time.substring(0,2));
+          int _minutes = int.parse(_time.substring(3,5));
+          tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+          tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, _year, _month,_days, _hours, _minutes); //计划日期
+          tz.TZDateTime scheduleEndDay =  tz.TZDateTime(tz.local, _year, _month,_days+int.parse(_dayNum)); //计划持续几天的结束日期
+          if (scheduledDate.isBefore(now)&&scheduledDate.isBefore(scheduleEndDay)) {
+            scheduledDate.add(Duration(days: 1));
+          }
+          return scheduledDate;
+        }else{
+          //有时间有日期没天数(需要日期没过期)
+          tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+            int _year = int.parse(_date.substring(0,4));
+            int _month = int.parse(_date.substring(5,7));
+            int _days = int.parse(_date.substring(8));
+            int _hours = int.parse(_time.substring(0,2));
+            int _minutes = int.parse(_time.substring(3,5));
+            tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, _year, _month,_days, _hours, _minutes);
+            return scheduledDate;
+        }
+      }else{
+        if(_dayNum!=null&&_dayNum!=''){
+          //有时间没日期有天数
+          int _hours = int.parse(_time.substring(0,2));
+          int _minutes = int.parse(_time.substring(3,5));
+          tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+          tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, now.year, now.month,now.day, _hours, _minutes); //计划日期
+          tz.TZDateTime scheduleEndDay = tz.TZDateTime.parse(tz.local, _storeTime);
+          if (scheduledDate.isBefore(now)&&scheduledDate.isBefore(scheduleEndDay)) {
+            scheduledDate.add(Duration(days: 1));
+          }
+          return scheduledDate;
+        }else{
+          //有时间没日期没天数
+          int _hours = int.parse(_time.substring(0,2));
+          int _minutes = int.parse(_time.substring(3,5));
+          tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+          tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, now.year, now.month,now.day, _hours, _minutes); //计划日期
+          if (scheduledDate.isBefore(now)) {
+            scheduledDate.add(Duration(days: 1));
+          }
+          return scheduledDate;
+        }
+      }
+    }else{
+      if(_date!=null&&_date!=''){
+        if(_dayNum!=null&&_dayNum!=''){
+          //没时间有日期有天数(预订没时间按每天早六点)
+          int _year = int.parse(_date.substring(0,4));
+          int _month = int.parse(_date.substring(5,7));
+          int _days = int.parse(_date.substring(8));
+          tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+          tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, _year, _month,_days, 6); //计划日期
+          tz.TZDateTime scheduleEndDay =  tz.TZDateTime(tz.local, _year, _month,_days+int.parse(_dayNum)); //计划持续几天的结束日期
+          if (scheduledDate.isBefore(now)&&scheduledDate.isBefore(scheduleEndDay)) {
+            scheduledDate.add(Duration(days: 1));
+          }
+          return scheduledDate;
+        }else{
+          //没时间有日期没天数(预订没时间按每天早六点)
+          int _year = int.parse(_date.substring(0,4));
+          int _month = int.parse(_date.substring(5,7));
+          int _days = int.parse(_date.substring(8));
+          tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, _year, _month,_days, 6); //计划日期
+          return scheduledDate;
+        }
+      }else{
+        if(_dayNum!=null&&_dayNum!=''){
+          //没时间没日期有天数(预订没时间按每天早六点)
+          tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+          tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local,  now.year, now.month,now.day, 6); //计划日期
+          tz.TZDateTime scheduleEndDay =  tz.TZDateTime.parse(tz.local, _storeTime); //计划持续几天的结束日期
+          if (scheduledDate.isBefore(now)&&scheduledDate.isBefore(scheduleEndDay)) {
+            scheduledDate.add(Duration(days: 1));
+          }
+          return scheduledDate;
+        }
+      }
+    }
+  }
+
+  //只有日期没有时间，当天六点提醒
+  Future _showDailyAtSixNotification(String _date) async{
+    var androidPlatformChannelSpecifics = new AndroidNotificationDetails('channelId', 'channelName', 'channelDescription',
+    priority: Priority.high,importance: Importance.max,icon: "app_icon");
+    NotificationDetails platformChannelSpecifics = new NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.zonedSchedule(001, 'NODE & NOTE',
+        '提醒事项：', _scheduledDateAtSix(_date), platformChannelSpecifics,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        androidAllowWhileIdle: true);
+  }
+  tz.TZDateTime _scheduledDateAtSix(String _date){
+    int _year = int.parse(_date.substring(0,4));
+    int _month = int.parse(_date.substring(5,7));
+    int _day = int.parse(_date.substring(8));
+    tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime scheduledDateTime = tz.TZDateTime(tz.local,_year,_month,_day,6);
+    if(scheduledDateTime.isBefore(now)){
+      scheduledDateTime = scheduledDateTime.add(Duration(days: 1));
+    }
+    return scheduledDateTime;
   }
 
   //删除单个通知
@@ -702,32 +849,6 @@ class _RandomWorldsState extends State<RandomWorlds> {
         );
   }
 
-  _useZonedSchedule() async {
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-        0,
-        'scheduled title',
-        'scheduled body',
-        tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5)),
-        const NotificationDetails(
-            android: AndroidNotificationDetails('your channel id',
-                'your channel name', 'your channel description')),
-        androidAllowWhileIdle: true,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time);
-  }
-
-  //定期显示指定间隔的通知 (默认每天一次)
-  Future _periodicallyDailyShow() async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails('repeating channel id',
-            'repeating channel name', 'repeating description');
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.periodicallyShow(0, 'repeating title',
-        'repeating body', RepeatInterval.daily, platformChannelSpecifics,
-        androidAllowWhileIdle: true);
-  }
 
   //点击通知后应触发的函数
   Future onSelectNotification(String payload) async {
@@ -759,4 +880,6 @@ class _RandomWorldsState extends State<RandomWorlds> {
       ),
     );
   }
+
+  //初始化工作（初始化list和初始化）
 }

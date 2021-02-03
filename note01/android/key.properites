@@ -1,0 +1,4 @@
+storePassword=guoyu123.
+keyPassword=guoyu123.
+keyAlias=sign
+storeFile=key/sign.jks
