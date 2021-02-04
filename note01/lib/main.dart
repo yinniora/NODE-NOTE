@@ -497,6 +497,9 @@ class _RandomWorldsState extends State<RandomWorlds> {
           }
         }
       }
+      if((item['date']==null||item['date']=='')&&(item['time']==null||item['time']=='')&&(item['dayNum']==null||item['dayNum']=='')){
+        continue;
+      }
       _showDateTimeDaysNotification(item['date'],item['time'],item['dayNum'],
           item['storeTime'],item['message'],int.parse(item['key'].substring(item['key'].length-5,item['key'].length-1)));
     }
