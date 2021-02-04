@@ -342,7 +342,7 @@ class _nodeDetailState extends State<nodeDetail> {
       'message': nodeMsg,
       'time': time,
       'date': date,
-      'dayNum': dayNum,
+      'dayNum': dayNum=='0'||dayNum==''||dayNum==null?'':dayNum,
       'storeTime': DateTime.now().toString()
     };
     String msgTemp = JSON.jsonEncode(msg);

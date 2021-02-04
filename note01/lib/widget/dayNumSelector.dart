@@ -43,7 +43,7 @@ class dayNumSelector extends StatelessWidget {
                 contentPadding:
                 EdgeInsets.fromLTRB(
                     5, 0, 0, 0),
-                hintText: '1',
+                hintText: '0',
                 border: OutlineInputBorder(
                     borderRadius:
                     BorderRadius
