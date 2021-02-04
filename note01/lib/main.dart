@@ -77,6 +77,7 @@ class _RandomWorldsState extends State<RandomWorlds> {
 
   @override
   Widget build(BuildContext context) {
+    print(111);
     getAllData().then((value) => {noteList = value,
     //初始化通知
     _initNotifications(noteList)});
@@ -266,7 +267,7 @@ class _RandomWorldsState extends State<RandomWorlds> {
                                                             .trim();
                                                     setState(() {
                                                       if (_tempMessage !=
-                                                              null &&
+                                                          null &&
                                                           _tempMessage != '') {
                                                         saveAction(
                                                             nodeController.text,
@@ -280,8 +281,8 @@ class _RandomWorldsState extends State<RandomWorlds> {
                                                       } else {
                                                         _scaffoldkey01.currentState
                                                             .showSnackBar(SnackBar(
-                                                                content: Text(
-                                                                    '您并没有填写任何提醒')));
+                                                            content: Text(
+                                                                '您并没有填写任何提醒')));
                                                       }
                                                       _focusNode.unfocus();
                                                       dayNumFocus.unfocus();
@@ -482,15 +483,15 @@ class _RandomWorldsState extends State<RandomWorlds> {
           if(scheduleDate.isBefore(now)){
             if(item['dayNum']==null||item['dayNum']==''){
               //  有过期的计划日期而且没有持续天数
-              print('具体信息：'+item['message']+' 时间：'+scheduleDate.toString());
-              print('有过期的计划日期而且没有持续天数');
+              // print('具体信息：'+item['message']+' 时间：'+scheduleDate.toString());
+              // print('有过期的计划日期而且没有持续天数');
               continue;
             }else{
               DateTime scheduleDate = DateTime(_year,_month,_days+int.parse(item['dayNum']),_hours,_minutes);
               if(scheduleDate.isBefore(now)){
                 //有计划日期且加上持续天数但过期
-                print('具体信息：'+item['message']+' 时间：'+scheduleDate.toString()+' 天数：'+item['dayNum']);
-                print('有计划日期且加上持续天数但过期');
+                // print('具体信息：'+item['message']+' 时间：'+scheduleDate.toString()+' 天数：'+item['dayNum']);
+                // print('有计划日期且加上持续天数但过期');
                 continue;
               }
             }
@@ -522,8 +523,8 @@ class _RandomWorldsState extends State<RandomWorlds> {
     };
     String saveTemp = JSON.jsonEncode(msg);
     saveString(msg['key'], saveTemp);
-    //更新一下build
-    setState(() {});
+    setState(() {
+    });
   }
 
   //时间选择器和日期选择器
