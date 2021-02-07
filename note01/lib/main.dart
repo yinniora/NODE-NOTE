@@ -11,6 +11,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:loading_indicator_view/loading_indicator_view.dart';
+import 'package:notification_permissions/notification_permissions.dart';
+
 
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
@@ -36,6 +38,11 @@ class RandomWorlds extends StatefulWidget {
 class _RandomWorldsState extends State<RandomWorlds> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  Future<String> permissionStatusFuture;
+  var permGranted = "granted";
+  var permDenied = "denied";
+  var permUnknown = "unknown";
+  var permProvisional = "provisional";
   var _scaffoldkey01 = new GlobalKey<ScaffoldState>();
   var nodeController = new TextEditingController();
   var _focusNode = new FocusNode();
@@ -56,7 +63,8 @@ class _RandomWorldsState extends State<RandomWorlds> {
   @override
   void initState() {
     super.initState();
-
+    //请求通知权限
+    permissionStatusFuture = getCheckNotificationPermStatus();
 
     //通知初始化
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -81,6 +89,8 @@ class _RandomWorldsState extends State<RandomWorlds> {
     getAllData().then((value) =>
     //初始化通知
     _initNotifications(value));
+    //请求通知权限
+    permissionStatusFuture = getCheckNotificationPermStatus();
 
     // deleteAll();
     // noteList.clear();
@@ -452,6 +462,45 @@ class _RandomWorldsState extends State<RandomWorlds> {
                   ));
                 }else if(snapshot.connectionState==ConnectionState.waiting){
                   return Container(child:Center(child: LineScalePulseOutIndicator()));
+                }
+                return Container();
+              }),
+
+          new Expanded(child: Container()),
+          //提醒请求
+          new FutureBuilder(
+              future:permissionStatusFuture,
+              builder: (context,snapShot){
+                if(snapShot.hasData){
+                  if(snapShot.data==permGranted){
+                    return Container();
+                  }
+                  return Container(
+                        height: 30,
+                        child: FlatButton(
+                          color: Colors.grey,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10.0))),
+                          child:
+                          Text("请点击开启通知权限",style: TextStyle(color: Colors.white),),
+                          onPressed: () {
+                            // show the dialog/open settings screen
+                            NotificationPermissions
+                                .requestNotificationPermissions(
+                                iosSettings:
+                                const NotificationSettingsIos(
+                                    sound: true,
+                                    badge: true,
+                                    alert: true))
+                                .then((_) {
+                              // when finished, check the permission status
+                              setState(() {
+                                permissionStatusFuture =
+                                    getCheckNotificationPermStatus();
+                              });
+                            });
+                          },
+                        ),
+                      );
                 }
                 return Container();
               })
@@ -855,5 +904,24 @@ class _RandomWorldsState extends State<RandomWorlds> {
     );
   }
 
-  //初始化工作（初始化list和初始化）
+  //初始化工作请求权限
+  /// Checks the notification permission status
+  Future<String> getCheckNotificationPermStatus() {
+    return NotificationPermissions.getNotificationPermissionStatus()
+        .then((status) {
+      switch (status) {
+        case PermissionStatus.denied:
+          return permDenied;
+        case PermissionStatus.granted:
+          return permGranted;
+        case PermissionStatus.unknown:
+          return permUnknown;
+        case PermissionStatus.provisional:
+          return permProvisional;
+        default:
+          return null;
+      }
+    });
+  }
+
 }
