@@ -478,7 +478,7 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
                 return Container();
               }),
 
-          new Expanded(child: Container()),//修饰用
+
           //提醒请求
           new FutureBuilder(
               future:permissionStatusFuture,
@@ -488,31 +488,35 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
                   if(snapShot.data==permGranted){
                     return Container();
                   }
-                  return Container(
-                        height: 30,
-                        child: FlatButton(
-                          color: Colors.grey,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10.0))),
-                          child:
-                          Text("请点击开启通知权限",style: TextStyle(color: Colors.white),),
-                          onPressed: () {
-                            // show the dialog/open settings screen
-                            NotificationPermissions
-                                .requestNotificationPermissions(
-                                iosSettings:
-                                const NotificationSettingsIos(
-                                    sound: true,
-                                    badge: true,
-                                    alert: true))
-                                .then((_) {
-                                  print(12121);
-                              // when finished, check the permission status
-                                  print(permissionStatusFuture);
-                              setState(() {});
+                  return Column(children: [
+                    new Expanded(child: Container()),//修饰用
+                    Container(
+                      height: 30,
+                      child: FlatButton(
+                        color: Colors.grey,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10.0))),
+                        child:
+                        Text("请点击开启通知权限",style: TextStyle(color: Colors.white),),
+                        onPressed: () {
+                          // show the dialog/open settings screen
+                          NotificationPermissions
+                              .requestNotificationPermissions(
+                              iosSettings:
+                              const NotificationSettingsIos(
+                                  sound: true,
+                                  badge: true,
+                                  alert: true))
+                              .then((_) {
+                            // when finished, check the permission status
+                            setState(() {
+                              print(permissionStatusFuture);
                             });
-                          },
-                        ),
-                      );
+                          });
+                        },
+                      ),
+                    )
+                  ],
+                  );
                 }
                 return Container();
               })
