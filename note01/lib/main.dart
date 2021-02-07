@@ -10,6 +10,7 @@ import 'dart:convert' as JSON;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:loading_indicator_view/loading_indicator_view.dart';
 
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
@@ -72,15 +73,14 @@ class _RandomWorldsState extends State<RandomWorlds> {
     tz.initializeTimeZones();
 
     //开启软件时初始化数组元素以及添加本地提醒 (异步加载完成刷新一下页面)
-    getAllData().then((value) => {noteList = value,_initNotifications(noteList), setState(() {})});
+    getAllData().then((value) => _initNotifications(value));
   }
 
   @override
   Widget build(BuildContext context) {
-    print(111);
-    getAllData().then((value) => {noteList = value,
+    getAllData().then((value) =>
     //初始化通知
-    _initNotifications(noteList)});
+    _initNotifications(value));
 
     // deleteAll();
     // noteList.clear();
@@ -363,89 +363,98 @@ class _RandomWorldsState extends State<RandomWorlds> {
           /*提醒列表显示*/
 
           //显示已经添加的提醒事项列表
-          noteList.length == 0
-              ? new Card(
-                  margin: EdgeInsets.fromLTRB(25, 0, 25, 10),
-                  child: Container(
-                    constraints: BoxConstraints(minHeight: 130),
-                    child: Center(
-                        child: Text(
-                      "没有添加任何记事",
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    )),
-                  ))
-              : new Expanded(child: Builder(
-                  builder: (BuildContext context) {
-                    return Card(
-                      elevation: selected ? 15.0 : 2.0,
-                      shape: const RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.all(Radius.circular(16.0))),
-                      margin: EdgeInsets.fromLTRB(20, 0, 20, 10),
-                      color: Color(0xffF5F5F5),
+          new FutureBuilder(
+              future: getAllData().then((value) => noteList=value),
+              builder: (context,snapshot){
+                if(snapshot.connectionState==ConnectionState.done){
+                  return noteList.length == 0
+                      ? new Card(
+                      margin: EdgeInsets.fromLTRB(25, 0, 25, 10),
                       child: Container(
-                        padding: EdgeInsets.fromLTRB(0, 15, 0, 5),
-                        child: ListView.builder(
-                            itemCount: noteList.length,
-                            shrinkWrap: true,
-                            itemBuilder: (context, index) {
-                              var item = noteList[index].toString();
-                              return GestureDetector(
-                                  onTap: () {
-                                    _navigateToMessageDetail(
-                                        context, noteList[index]);
-                                  },
-                                  child: Dismissible(
-                                    key: Key(UniqueKey().toString()),
-                                    direction: DismissDirection.endToStart,
-                                    onDismissed: (direction) {
-                                      setState(() {
-                                        deleteString(noteList[index]['key']);
-                                        noteList.removeAt(index);
-                                      });
+                        constraints: BoxConstraints(minHeight: 130),
+                        child: Center(
+                            child: Text(
+                              "没有添加任何记事",
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            )),
+                      ))
+                      : new Expanded(child: Builder(
+                    builder: (BuildContext context) {
+                      return Card(
+                        elevation: selected ? 15.0 : 2.0,
+                        shape: const RoundedRectangleBorder(
+                            borderRadius:
+                            BorderRadius.all(Radius.circular(16.0))),
+                        margin: EdgeInsets.fromLTRB(20, 0, 20, 10),
+                        color: Color(0xffF5F5F5),
+                        child: Container(
+                          padding: EdgeInsets.fromLTRB(0, 15, 0, 5),
+                          child: ListView.builder(
+                              itemCount: noteList.length,
+                              shrinkWrap: true,
+                              itemBuilder: (context, index) {
+                                var item = noteList[index].toString();
+                                return GestureDetector(
+                                    onTap: () {
+                                      _navigateToMessageDetail(
+                                          context, noteList[index]);
                                     },
-                                    dismissThresholds: {
-                                      DismissDirection.endToStart: 0.6
-                                    },
-                                    background: Card(
-                                        margin: EdgeInsets.all(10),
-                                        color: Colors.redAccent,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(15))),
-                                        child: Container(
-                                          alignment: Alignment.centerRight,
-                                          padding: EdgeInsets.only(right: 10),
-                                          child: Icon(
-                                            Icons.restore_from_trash,
-                                            color: Colors.white,
-                                          ),
-                                        )),
-                                    child: Card(
-                                      shape: const RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(20.0))),
-                                      color: Color(0xffFFFAF0),
-                                      margin: EdgeInsets.all(7),
-                                      child: new Container(
-                                          padding: EdgeInsets.all(5),
-                                          child: Column(
-                                            children: [
-                                              new ListTile(
-                                                title: Text(
-                                                    '${noteList[index]['message']}'),
-                                              ),
-                                            ],
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                    child: Dismissible(
+                                      key: Key(UniqueKey().toString()),
+                                      direction: DismissDirection.endToStart,
+                                      onDismissed: (direction) {
+                                        setState(() {
+                                          deleteString(noteList[index]['key']);
+                                          noteList.removeAt(index);
+                                        });
+                                      },
+                                      dismissThresholds: {
+                                        DismissDirection.endToStart: 0.6
+                                      },
+                                      background: Card(
+                                          margin: EdgeInsets.all(10),
+                                          color: Colors.redAccent,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(15))),
+                                          child: Container(
+                                            alignment: Alignment.centerRight,
+                                            padding: EdgeInsets.only(right: 10),
+                                            child: Icon(
+                                              Icons.restore_from_trash,
+                                              color: Colors.white,
+                                            ),
                                           )),
-                                    ),
-                                  ));
-                            }),
-                      ),
-                    );
-                  },
-                )),
+                                      child: Card(
+                                        shape: const RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(20.0))),
+                                        color: Color(0xffFFFAF0),
+                                        margin: EdgeInsets.all(7),
+                                        child: new Container(
+                                            padding: EdgeInsets.all(5),
+                                            child: Column(
+                                              children: [
+                                                new ListTile(
+                                                  title: Text(
+                                                      '${noteList[index]['message']}'),
+                                                ),
+                                              ],
+                                              crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                            )),
+                                      ),
+                                    ));
+                              }),
+                        ),
+                      );
+                    },
+                  ));
+                }else if(snapshot.connectionState==ConnectionState.waiting){
+                  return Container(child:Center(child: LineScalePulseOutIndicator()));
+                }
+                return Container();
+              })
         ],
       ),
     );

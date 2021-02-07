@@ -80,7 +80,6 @@ class _nodeDetailState extends State<nodeDetail> {
     } else {
       updateAnyone = false;
     }
-    print(message);
 
     return Scaffold(
         key: _scaffoldkey,
