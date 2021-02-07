@@ -484,19 +484,17 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
               future:permissionStatusFuture,
               builder: (context,snapShot){
                 if(snapShot.hasData){
-                  print(snapShot.data);
                   if(snapShot.data==permGranted){
                     return Container();
                   }
                   return Column(children: [
-                    new Expanded(child: Container()),//修饰用
                     Container(
                       height: 30,
                       child: FlatButton(
                         color: Colors.grey,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10.0))),
                         child:
-                        Text("请点击开启通知权限",style: TextStyle(color: Colors.white),),
+                        Text("请点击开启通知权限,否则无法使用提醒功能",style: TextStyle(color: Colors.white),),
                         onPressed: () {
                           // show the dialog/open settings screen
                           NotificationPermissions
@@ -509,7 +507,7 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
                               .then((_) {
                             // when finished, check the permission status
                             setState(() {
-                              print(permissionStatusFuture);
+                              permissionStatusFuture= getCheckNotificationPermStatus();
                             });
                           });
                         },
