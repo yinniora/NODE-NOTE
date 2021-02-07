@@ -35,7 +35,7 @@ class RandomWorlds extends StatefulWidget {
   _RandomWorldsState createState() => _RandomWorldsState();
 }
 
-class _RandomWorldsState extends State<RandomWorlds> {
+class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver{
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
   Future<String> permissionStatusFuture;
@@ -64,7 +64,12 @@ class _RandomWorldsState extends State<RandomWorlds> {
   void initState() {
     super.initState();
     //请求通知权限
+    // set up the notification permissions class
+    // set up the future to fetch the notification data
     permissionStatusFuture = getCheckNotificationPermStatus();
+    // With this, we will be able to check if the permission is granted or not
+    // when returning to the application
+    WidgetsBinding.instance.addObserver(this);
 
     //通知初始化
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -85,12 +90,19 @@ class _RandomWorldsState extends State<RandomWorlds> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() {
+        permissionStatusFuture = getCheckNotificationPermStatus();
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     getAllData().then((value) =>
     //初始化通知
     _initNotifications(value));
-    //请求通知权限
-    permissionStatusFuture = getCheckNotificationPermStatus();
 
     // deleteAll();
     // noteList.clear();
@@ -466,12 +478,13 @@ class _RandomWorldsState extends State<RandomWorlds> {
                 return Container();
               }),
 
-          new Expanded(child: Container()),
+          new Expanded(child: Container()),//修饰用
           //提醒请求
           new FutureBuilder(
               future:permissionStatusFuture,
               builder: (context,snapShot){
                 if(snapShot.hasData){
+                  print(snapShot.data);
                   if(snapShot.data==permGranted){
                     return Container();
                   }
@@ -492,11 +505,10 @@ class _RandomWorldsState extends State<RandomWorlds> {
                                     badge: true,
                                     alert: true))
                                 .then((_) {
+                                  print(12121);
                               // when finished, check the permission status
-                              setState(() {
-                                permissionStatusFuture =
-                                    getCheckNotificationPermStatus();
-                              });
+                                  print(permissionStatusFuture);
+                              setState(() {});
                             });
                           },
                         ),
