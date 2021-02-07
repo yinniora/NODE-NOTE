@@ -10,9 +10,9 @@ import 'dart:convert' as JSON;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/standalone.dart' as tz;
 import 'package:loading_indicator_view/loading_indicator_view.dart';
 import 'package:notification_permissions/notification_permissions.dart';
-
 
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
@@ -84,7 +84,7 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
     flutterLocalNotificationsPlugin.initialize(initializationSettings,
         onSelectNotification: onSelectNotification);
     tz.initializeTimeZones();
-
+    initPlatformState();
     //开启软件时初始化数组元素以及添加本地提醒 (异步加载完成刷新一下页面)
     getAllData().then((value) => _initNotifications(value));
   }
@@ -774,6 +774,7 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
         androidAllowWhileIdle: true);
   }
   tz.TZDateTime _scheduledDateTimeDays(String _date,String _time,String _dayNum,String _storeTime) {
+    var _local = tz.getLocation('Asia/Shanghai');
     if(_time!=null&&_time!=''){
       if(_date!=null&&_date!=''){
         if(_dayNum!=null&&_dayNum!=''){
@@ -783,22 +784,22 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
           int _days = int.parse(_date.substring(8));
           int _hours = int.parse(_time.substring(0,2));
           int _minutes = int.parse(_time.substring(3,5));
-          tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-          tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, _year, _month,_days, _hours, _minutes); //计划日期
-          tz.TZDateTime scheduleEndDay =  tz.TZDateTime(tz.local, _year, _month,_days+int.parse(_dayNum)); //计划持续几天的结束日期
+          tz.TZDateTime now = tz.TZDateTime.now(_local);
+          tz.TZDateTime scheduledDate = tz.TZDateTime(_local, _year, _month,_days, _hours, _minutes); //计划日期
+          tz.TZDateTime scheduleEndDay =  tz.TZDateTime(_local, _year, _month,_days+int.parse(_dayNum)); //计划持续几天的结束日期
           if (scheduledDate.isBefore(now)&&scheduledDate.isBefore(scheduleEndDay)) {
             scheduledDate = scheduledDate.add(Duration(days: 1));
           }
           return scheduledDate;
         }else{
           //有时间有日期没天数(需要日期没过期)
-          tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+          tz.TZDateTime now = tz.TZDateTime.now(_local);
             int _year = int.parse(_date.substring(0,4));
             int _month = int.parse(_date.substring(5,7));
             int _days = int.parse(_date.substring(8));
             int _hours = int.parse(_time.substring(0,2));
             int _minutes = int.parse(_time.substring(3,5));
-            tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, _year, _month,_days, _hours, _minutes);
+            tz.TZDateTime scheduledDate = tz.TZDateTime(_local, _year, _month,_days, _hours, _minutes);
             return scheduledDate;
         }
       }else{
@@ -806,9 +807,9 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
           //有时间没日期有天数
           int _hours = int.parse(_time.substring(0,2));
           int _minutes = int.parse(_time.substring(3,5));
-          tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-          tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, now.year, now.month,now.day, _hours, _minutes); //计划日期
-          tz.TZDateTime scheduleEndDay = tz.TZDateTime.parse(tz.local, _storeTime);
+          tz.TZDateTime now = tz.TZDateTime.now(_local);
+          tz.TZDateTime scheduledDate = tz.TZDateTime(_local, now.year, now.month,now.day, _hours, _minutes); //计划日期
+          tz.TZDateTime scheduleEndDay = tz.TZDateTime.parse(_local, _storeTime);
           if (scheduledDate.isBefore(now)&&scheduledDate.isBefore(scheduleEndDay)) {
             scheduledDate = scheduledDate.add(Duration(days: 1));
           }
@@ -817,8 +818,9 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
           //有时间没日期没天数
           int _hours = int.parse(_time.substring(0,2));
           int _minutes = int.parse(_time.substring(3,5));
-          tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-          tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, now.year, now.month,now.day, _hours, _minutes); //计划日期
+          tz.TZDateTime now = tz.TZDateTime.now(_local);
+          print(now);
+          tz.TZDateTime scheduledDate = tz.TZDateTime(_local, now.year, now.month,now.day, _hours, _minutes); //计划日期
           if (scheduledDate.isBefore(now)) {
             scheduledDate = scheduledDate.add(new Duration(days: 1));
           }
@@ -832,9 +834,9 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
           int _year = int.parse(_date.substring(0,4));
           int _month = int.parse(_date.substring(5,7));
           int _days = int.parse(_date.substring(8));
-          tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-          tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, _year, _month,_days, 6); //计划日期
-          tz.TZDateTime scheduleEndDay =  tz.TZDateTime(tz.local, _year, _month,_days+int.parse(_dayNum)); //计划持续几天的结束日期
+          tz.TZDateTime now = tz.TZDateTime.now(_local);
+          tz.TZDateTime scheduledDate = tz.TZDateTime(_local, _year, _month,_days, 6); //计划日期
+          tz.TZDateTime scheduleEndDay =  tz.TZDateTime(_local, _year, _month,_days+int.parse(_dayNum)); //计划持续几天的结束日期
           if (scheduledDate.isBefore(now)&&scheduledDate.isBefore(scheduleEndDay)) {
             scheduledDate = scheduledDate.add(Duration(days: 1));
           }
@@ -844,15 +846,15 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
           int _year = int.parse(_date.substring(0,4));
           int _month = int.parse(_date.substring(5,7));
           int _days = int.parse(_date.substring(8));
-          tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, _year, _month,_days, 6); //计划日期
+          tz.TZDateTime scheduledDate = tz.TZDateTime(_local, _year, _month,_days, 6); //计划日期
           return scheduledDate;
         }
       }else{
         if(_dayNum!=null&&_dayNum!=''){
           //没时间没日期有天数(预订没时间按每天早六点)
-          tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-          tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local,  now.year, now.month,now.day, 6); //计划日期
-          tz.TZDateTime scheduleEndDay =  tz.TZDateTime.parse(tz.local, _storeTime); //计划持续几天的结束日期
+          tz.TZDateTime now = tz.TZDateTime.now(_local);
+          tz.TZDateTime scheduledDate = tz.TZDateTime(_local,  now.year, now.month,now.day, 6); //计划日期
+          tz.TZDateTime scheduleEndDay =  tz.TZDateTime.parse(_local, _storeTime); //计划持续几天的结束日期
           if (scheduledDate.isBefore(now)&&scheduledDate.isBefore(scheduleEndDay)) {
             scheduledDate = scheduledDate.add(Duration(days: 1));
           }
@@ -938,4 +940,10 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
     });
   }
 
+  // Platform messages are asynchronous, so we initialize in an async method.
+  Future<void> initPlatformState() async {
+    await tz.initializeTimeZone();
+    var ChinaTime = tz.getLocation('Asia/Shanghai');
+    tz.setLocalLocation(ChinaTime);
+  }
 }
