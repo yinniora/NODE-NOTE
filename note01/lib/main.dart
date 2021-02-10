@@ -162,6 +162,7 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
                     if(v.primaryDelta<-3){
                       setState(() {
                         selected = true;
+                        _focusNode.unfocus();
                       });
                     }
                   },
