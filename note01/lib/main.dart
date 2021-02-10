@@ -84,7 +84,6 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
     flutterLocalNotificationsPlugin.initialize(initializationSettings,
         onSelectNotification: onSelectNotification);
     tz.initializeTimeZones();
-    initPlatformState();
     //开启软件时初始化数组元素以及添加本地提醒 (异步加载完成刷新一下页面)
     getAllData().then((value) => _initNotifications(value));
   }
@@ -454,12 +453,15 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
                                         color: Color(0xffFFFAF0),
                                         margin: EdgeInsets.all(7),
                                         child: new Container(
-                                            padding: EdgeInsets.all(5),
+                                          padding: EdgeInsets.symmetric(vertical: 0,horizontal: 5),
                                             child: Column(
                                               children: [
                                                 new ListTile(
                                                   title: Text(
-                                                      '${noteList[index]['message']}'),
+                                                      '${noteList[index]['message']}',
+                                                    softWrap: true,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  maxLines: 2,),
                                                 ),
                                               ],
                                               crossAxisAlignment:
@@ -938,12 +940,5 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
           return null;
       }
     });
-  }
-
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    await tz.initializeTimeZone();
-    var ChinaTime = tz.getLocation('Asia/Shanghai');
-    tz.setLocalLocation(ChinaTime);
   }
 }

@@ -124,20 +124,27 @@ class _nodeDetailState extends State<nodeDetail> {
                             borderRadius:
                                 BorderRadius.all(Radius.circular(15))),
                         elevation: 10,
-                        child: TextField(
-                          controller: nodeDetailContrl,
-                          focusNode: nodeDetailFocus,
-                          autofocus: false,
-                          maxLines: 50,
-                          keyboardType: TextInputType.text,
-                          textInputAction: TextInputAction.done,
-                          decoration: InputDecoration(
-                            contentPadding: EdgeInsets.all(20),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(5),
-                                borderSide: BorderSide.none),
-                            fillColor: Color(0xffFFEFD5),
-                            filled: true,
+                        child: GestureDetector(
+                          onVerticalDragUpdate: (details){
+                            if(details.primaryDelta >4){
+                              nodeDetailFocus.unfocus();
+                            }
+                          },
+                          child: TextField(
+                            controller: nodeDetailContrl,
+                            focusNode: nodeDetailFocus,
+                            autofocus: false,
+                            maxLines: 50,
+                            keyboardType: TextInputType.multiline,
+                            textInputAction: TextInputAction.newline,
+                            decoration: InputDecoration(
+                              contentPadding: EdgeInsets.all(20),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(5),
+                                  borderSide: BorderSide.none),
+                              fillColor: Color(0xffFFEFD5),
+                              filled: true,
+                            ),
                           ),
                         ),
                       ),
