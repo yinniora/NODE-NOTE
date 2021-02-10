@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +14,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/standalone.dart' as tz;
 import 'package:loading_indicator_view/loading_indicator_view.dart';
 import 'package:notification_permissions/notification_permissions.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
@@ -156,222 +158,228 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
                       FocusScope.of(context).requestFocus(_focusNode);
                     });
                   },
+                  onVerticalDragUpdate: (v){
+                    if(v.primaryDelta<-3){
+                      setState(() {
+                        selected = true;
+                      });
+                    }
+                  },
                   child: Center(
                     child: AnimatedContainer(
-                      height: selected ? 60 : 350,
+                      height: selected ? 58 : 350,
                       duration: Duration(seconds: 1), //动画持续时间
                       curve: Curves.linearToEaseOut, //差值器（动画效果）
                       child: Card(
-                        child: ListView(
-                          shrinkWrap: true,
-                          children: [
-                            new Column(
-                              children: [
-                                new Container(
-                                    child: Column(
-                                  children: [
-                                    selected
-                                        ? new Container(
-                                            height: 50,
-                                            padding: EdgeInsets.fromLTRB(
-                                                15, 0, 0, 0),
-                                            decoration: new BoxDecoration(
-                                              color: Colors.blueGrey,
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(5.0)),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Text(
-                                                  "添加提醒",
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            ))
-                                        : new Container(),
-                                    new Container(
-                                      child: TextField(
-                                        controller: nodeController,
-                                        focusNode: _focusNode,
-                                        keyboardType: TextInputType.text,
-                                        maxLines: selected ? 2 : 7,
-                                        decoration: InputDecoration(
-                                          contentPadding: EdgeInsets.fromLTRB(
-                                              15, 30, 10, 0),
-                                          labelText: '',
-                                          hintText: '',
-                                          helperText: '',
-                                          border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                              borderSide: BorderSide.none),
-                                          fillColor: Color(0xffFFEFD5),
-                                          filled: true,
-                                        ),
-                                        textInputAction: TextInputAction.done,
-                                        autofocus: false,
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                        ),
-                                      ),
-                                    )
-                                  ],
-                                )),
-                                //时间日期选项
-                                new Container(
-                                  margin: EdgeInsets.fromLTRB(0, 0, 0, 10),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
+                        child: ListView(children: [
+                          Column(
+                            children: [
+                              new Container(
+                                  child: Column(
                                     children: [
-                                      new Stack(
-                                        alignment: FractionalOffset(0.5,1),
-                                        children: [
-                                          new IconButton(
-                                            tooltip: "选择时间",
-                                            icon: new Icon(Icons.schedule),
-                                            onPressed: () => _showTimePicker(),
+                                      selected
+                                          ? new Container(
+                                          height: 50,
+                                          padding: EdgeInsets.fromLTRB(
+                                              15, 0, 0, 0),
+                                          decoration: new BoxDecoration(
+                                            color: Colors.blueGrey,
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(5.0)),
                                           ),
-                                          time != null && time != ''
-                                              ? new Positioned(
-                                              child: new Text('${time}',style: TextStyle(color: Colors.blueGrey,fontSize: 12),))
-                                          :new Container()
-                                        ],
-                                      ),
-                                      //设置时间
-                                      new Stack(
-                                        alignment: FractionalOffset(0.5,1),
-                                        children: [
-                                          new IconButton(
-                                              tooltip: "选择日期",
-                                              icon: new Icon(
-                                                  Icons.today_outlined),
-                                              onPressed: () =>
-                                                  _showDataPicker()),
-                                          date != null && date != ''
-                                              ?new Text( '${date.substring(5,10)}',style: TextStyle(color: Colors.blueGrey,fontSize: 12)):new Container()
-                                        ],
-                                      ),
-                                      //日期
-                                      dayNumSelector(
-                                          dayNumCon: dayNumCon,
-                                          dayNumFocus: dayNumFocus), //天数
+                                          child: Row(
+                                            children: [
+                                              Text(
+                                                "添加提醒",
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ))
+                                          : new Container(),
+                                      new Container(
+                                        child: TextField(
+                                          controller: nodeController,
+                                          focusNode: _focusNode,
+                                          keyboardType: TextInputType.text,
+                                          maxLines: selected ? 2 : 7,
+                                          decoration: InputDecoration(
+                                            contentPadding: EdgeInsets.fromLTRB(
+                                                15, 30, 10, 0),
+                                            labelText: '',
+                                            hintText: '',
+                                            helperText: '',
+                                            border: OutlineInputBorder(
+                                                borderRadius:
+                                                BorderRadius.circular(5),
+                                                borderSide: BorderSide.none),
+                                            fillColor: Color(0xffFFEFD5),
+                                            filled: true,
+                                          ),
+                                          textInputAction: TextInputAction.done,
+                                          autofocus: false,
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                          ),
+                                        ),
+                                      )
                                     ],
-                                  ),
-                                ),
-                                //提交按钮
-                                new Container(
-                                    margin: EdgeInsets.fromLTRB(0, 5, 0, 0),
-                                    child: Column(
+                                  )),
+                              //时间日期选项
+                              new Container(
+                                margin: EdgeInsets.fromLTRB(0, 0, 0, 10),
+                                child: Row(
+                                  mainAxisAlignment:
+                                  MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    new Stack(
+                                      alignment: FractionalOffset(0.5,1),
                                       children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: [
-                                            new Container(
-                                                child: Container(
-                                              height: 30,
-                                              width: 100,
-                                              decoration: new BoxDecoration(
-                                                  color: Colors.lightBlueAccent,
-                                                  borderRadius:
-                                                      BorderRadius.all(
-                                                          Radius.circular(
-                                                              10.0))),
-                                              child: MaterialButton(
-                                                  onPressed: () {
-                                                    var _tempMessage =
-                                                        nodeController.text
-                                                            .trim();
-                                                    setState(() {
-                                                      if (_tempMessage !=
-                                                          null &&
-                                                          _tempMessage != '') {
-                                                        saveAction(
-                                                            nodeController.text,
-                                                            time,
-                                                            date,
-                                                            dayNumCon.text);
+                                        new IconButton(
+                                          tooltip: "选择时间",
+                                          icon: new Icon(Icons.schedule),
+                                          onPressed: () => _showTimePicker(),
+                                        ),
+                                        time != null && time != ''
+                                            ? new Positioned(
+                                            child: new Text('${time}',style: TextStyle(color: Colors.blueGrey,fontSize: 12),))
+                                            :new Container()
+                                      ],
+                                    ),
+                                    //设置时间
+                                    new Stack(
+                                      alignment: FractionalOffset(0.5,1),
+                                      children: [
+                                        new IconButton(
+                                            tooltip: "选择日期",
+                                            icon: new Icon(
+                                                Icons.today_outlined),
+                                            onPressed: () =>
+                                                _showDataPicker()),
+                                        date != null && date != ''
+                                            ?new Text( '${date.substring(5,10)}',style: TextStyle(color: Colors.blueGrey,fontSize: 12)):new Container()
+                                      ],
+                                    ),
+                                    //日期
+                                    dayNumSelector(
+                                        dayNumCon: dayNumCon,
+                                        dayNumFocus: dayNumFocus), //天数
+                                  ],
+                                ),
+                              ),
+                              //提交按钮
+                              selected?new Container():new Container(
+                                  margin: EdgeInsets.fromLTRB(0, 5, 0, 0),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          new Container(
+                                              child: Container(
+                                                height: 30,
+                                                width: 100,
+                                                decoration: new BoxDecoration(
+                                                    color: Colors.lightBlueAccent,
+                                                    borderRadius:
+                                                    BorderRadius.all(
+                                                        Radius.circular(
+                                                            10.0))),
+                                                child: MaterialButton(
+                                                    onPressed: () {
+                                                      var _tempMessage =
+                                                      nodeController.text
+                                                          .trim();
+                                                      setState(() {
+                                                        if (_tempMessage !=
+                                                            null &&
+                                                            _tempMessage != '') {
+                                                          saveAction(
+                                                              nodeController.text,
+                                                              time,
+                                                              date,
+                                                              dayNumCon.text);
+                                                          nodeController.clear();
+                                                          dayNumCon.clear();
+                                                          time = '';
+                                                          date = '';
+                                                        } else {
+                                                          _scaffoldkey01.currentState
+                                                              .showSnackBar(SnackBar(
+                                                              content: Text(
+                                                                  '您并没有填写任何提醒')));
+                                                        }
+                                                        _focusNode.unfocus();
+                                                        dayNumFocus.unfocus();
+                                                      });
+                                                    },
+                                                    child: Text(
+                                                      "保存",
+                                                      style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                          FontWeight.w600),
+                                                    )),
+                                              )),
+                                          new Container(
+                                              child: Container(
+                                                height: 30,
+                                                width: 100,
+                                                decoration: new BoxDecoration(
+                                                    color: Colors.redAccent,
+                                                    borderRadius:
+                                                    BorderRadius.all(
+                                                        Radius.circular(
+                                                            10.0))),
+                                                child: MaterialButton(
+                                                    onPressed: () {
+                                                      setState(() {
                                                         nodeController.clear();
                                                         dayNumCon.clear();
+                                                        _focusNode.unfocus();
+                                                        dayNumFocus.unfocus();
                                                         time = '';
                                                         date = '';
-                                                      } else {
-                                                        _scaffoldkey01.currentState
-                                                            .showSnackBar(SnackBar(
-                                                            content: Text(
-                                                                '您并没有填写任何提醒')));
-                                                      }
-                                                      _focusNode.unfocus();
-                                                      dayNumFocus.unfocus();
-                                                    });
-                                                  },
-                                                  child: Text(
-                                                    "保存",
-                                                    style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight:
-                                                            FontWeight.w600),
-                                                  )),
-                                            )),
-                                            new Container(
-                                                child: Container(
-                                              height: 30,
-                                              width: 100,
-                                              decoration: new BoxDecoration(
-                                                  color: Colors.redAccent,
-                                                  borderRadius:
-                                                      BorderRadius.all(
-                                                          Radius.circular(
-                                                              10.0))),
-                                              child: MaterialButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      nodeController.clear();
-                                                      dayNumCon.clear();
-                                                      _focusNode.unfocus();
-                                                      dayNumFocus.unfocus();
-                                                      time = '';
-                                                      date = '';
-                                                    });
-                                                  },
-                                                  child: Text(
-                                                    "重置",
-                                                    style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight:
-                                                            FontWeight.w600),
-                                                  )),
-                                            ))
-                                          ],
-                                        ),
-                                        new Container(
-                                          alignment: Alignment.center,
-                                          height: 30,
-                                          margin: EdgeInsets.only(top: 5),
-                                          child: IconButton(
-                                            icon: Icon(
-                                              Icons.keyboard_arrow_up,
-                                              color: Colors.grey,
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                selected = true;
-                                              });
-                                              _focusNode.unfocus();
-                                            },
+                                                      });
+                                                    },
+                                                    child: Text(
+                                                      "重置",
+                                                      style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                          FontWeight.w600),
+                                                    )),
+                                              ))
+                                        ],
+                                      ),
+                                      new Container(
+                                        alignment: Alignment.center,
+                                        height: 30,
+                                        margin: EdgeInsets.only(top: 5),
+                                        child: IconButton(
+                                          icon: Icon(
+                                            Icons.keyboard_arrow_up,
+                                            color: Colors.grey,
                                           ),
-                                        )
-                                      ],
-                                    )),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                                          onPressed: () {
+                                            setState(() {
+                                              selected = true;
+                                            });
+                                            _focusNode.unfocus();
+                                          },
+                                        ),
+                                      )
+                                    ],
+                                  )),
+                            ],
+                          ),
+                        ],
+                            physics: const NeverScrollableScrollPhysics()
+                        )
+                      )
                     ),
                   ),
                 ),
@@ -420,32 +428,56 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
                                       _navigateToMessageDetail(
                                           context, noteList[index]);
                                     },
-                                    child: Dismissible(
-                                      key: Key(UniqueKey().toString()),
-                                      direction: DismissDirection.endToStart,
-                                      onDismissed: (direction) {
-                                        setState(() {
-                                          deleteString(noteList[index]['key']);
-                                          noteList.removeAt(index);
-                                        });
-                                      },
-                                      dismissThresholds: {
-                                        DismissDirection.endToStart: 0.6
-                                      },
-                                      background: Card(
-                                          margin: EdgeInsets.all(10),
-                                          color: Colors.redAccent,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(15))),
-                                          child: Container(
-                                            alignment: Alignment.centerRight,
-                                            padding: EdgeInsets.only(right: 10),
-                                            child: Icon(
-                                              Icons.restore_from_trash,
-                                              color: Colors.white,
-                                            ),
-                                          )),
+                                    child: Slidable(
+                                      actionPane: SlidableBehindActionPane(),
+                                      actionExtentRatio: 0.25,
+                                      actions: [
+                                        SlideAction(
+                                          child: Card(
+                                              margin: EdgeInsets.fromLTRB(10, 10, 0, 10),
+                                              color: Colors.blue,
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.all(
+                                                      Radius.circular(15))),
+                                              child: Center(
+                                                child: Icon(
+                                                    Icons.notifications_off_outlined,
+                                                    color: Colors.white,
+                                                  )
+                                              )),
+                                          onTap: (){
+                                            _cancelNotification(int.parse(noteList[index]['key'].substring(noteList[index]['key'].length-5,noteList[index]['key'].length-1)));
+                                            setState(() {
+                                              noteList[index]['time']='';
+                                              noteList[index]['date']='';
+                                              noteList[index]['dayNum']='';
+                                              updateString(noteList[index]['key'], JSON.jsonEncode(noteList[index]));
+                                            });
+                                          },
+                                        )
+                                      ],
+                                      secondaryActions: [
+                                        SlideAction(
+                                          child: Card(
+                                              margin: EdgeInsets.fromLTRB(0,10,10,10),
+                                              color: Colors.redAccent,
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.all(
+                                                      Radius.circular(15))),
+                                              child: Center(
+                                                child: Icon(
+                                                  Icons.delete_outline,
+                                                  color: Colors.white,
+                                                ),
+                                              )),
+                                          onTap: (){
+                                            setState(() {
+                                              deleteString(noteList[index]['key']);
+                                              noteList.removeAt(index);
+                                            });
+                                          },
+                                        )
+                                      ],
                                       child: Card(
                                         shape: const RoundedRectangleBorder(
                                             borderRadius: BorderRadius.all(
@@ -539,13 +571,13 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
           if(scheduleDate.isBefore(now)){
             if(item['dayNum']==null||item['dayNum']==''){
               //  有过期的计划日期而且没有持续天数(过了当天早六点)
-              print('有过期的计划日期(过了当天早六点)而且没有持续天数');
+              // print('有过期的计划日期(过了当天早六点)而且没有持续天数');
               continue;
             }else{
               DateTime scheduleDate = DateTime(_year,_month,_days+int.parse(item['dayNum']),6,10);
               if(scheduleDate.isBefore(now)){
                 //有计划日期且加上持续天数但过期(过了当天早六点)
-                print('有计划日期且加上持续天数但过期(过了当天早六点)');
+                // print('有计划日期且加上持续天数但过期(过了当天早六点)');
                 continue;
               }
             }
@@ -623,7 +655,6 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
         _tempTime = picker.toString().substring(10, 15);
         time = _tempTime;
       });
-      print(time);
     }
   }
 
@@ -649,7 +680,6 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
         _tempDate = picker.toString().substring(0, 10);
         date = _tempDate;
       });
-      print(date);
     }
   }
 
@@ -691,7 +721,6 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
             ],
           );
         }).then((value) {
-      print(value);
       if (value == true) {
         deleteAll();
         setState(() {});
@@ -821,7 +850,6 @@ class _RandomWorldsState extends State<RandomWorlds> with WidgetsBindingObserver
           int _hours = int.parse(_time.substring(0,2));
           int _minutes = int.parse(_time.substring(3,5));
           tz.TZDateTime now = tz.TZDateTime.now(_local);
-          print(now);
           tz.TZDateTime scheduledDate = tz.TZDateTime(_local, now.year, now.month,now.day, _hours, _minutes); //计划日期
           if (scheduledDate.isBefore(now)) {
             scheduledDate = scheduledDate.add(new Duration(days: 1));

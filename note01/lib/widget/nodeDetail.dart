@@ -242,7 +242,7 @@ class _nodeDetailState extends State<nodeDetail> {
                                                     dayNumInputContrl.text !=
                                                         '') {
                                                   _dayInputSave();
-                                                  print(dayNumInputContrl.text);
+                                                  // print(dayNumInputContrl.text);
                                                 } else {
                                                   _scaffoldkey.currentState
                                                       .showSnackBar(SnackBar(
